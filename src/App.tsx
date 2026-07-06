@@ -12,6 +12,7 @@ export function App() {
   ]);
   const [keywordInput, setKeywordInput] = useState("Game of Thrones, 49ers");
   const [contentMode, setContentMode] = useState<ContentMode>("clean");
+  const [playerFeedback, setPlayerFeedback] = useState("");
 
   const suggestions = useMemo(() => {
     const selectedIds = new Set(selectedPlayers.map((player) => player.id));
@@ -33,21 +34,44 @@ export function App() {
   );
 
   function addPlayer(player: Player) {
+    if (selectedPlayers.some((selectedPlayer) => selectedPlayer.id === player.id)) {
+      setPlayerFeedback(`${player.fullName} is already on your roster.`);
+      return;
+    }
+
     setSelectedPlayers((currentPlayers) => [...currentPlayers, player]);
     setPlayerQuery("");
+    setPlayerFeedback(`${player.fullName} added.`);
   }
 
   function removePlayer(playerId: string) {
     setSelectedPlayers((currentPlayers) => currentPlayers.filter((player) => player.id !== playerId));
+    setPlayerFeedback("");
   }
 
   function handlePlayerSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const trimmedQuery = playerQuery.trim();
+
+    if (!trimmedQuery) {
+      setPlayerFeedback("Enter a player name to add.");
+      return;
+    }
+
+    const [firstMatch] = searchPlayers(activePlayers, trimmedQuery, 1);
     const [firstSuggestion] = suggestions;
+
+    if (firstMatch && selectedPlayers.some((player) => player.id === firstMatch.id)) {
+      setPlayerFeedback(`${firstMatch.fullName} is already on your roster.`);
+      return;
+    }
 
     if (firstSuggestion) {
       addPlayer(firstSuggestion);
+      return;
     }
+
+    setPlayerFeedback("No matching active player found.");
   }
 
   function handleKeywordChange(event: ChangeEvent<HTMLInputElement>) {
@@ -99,6 +123,11 @@ export function App() {
                     </button>
                   ))}
                 </div>
+              )}
+              {playerFeedback && (
+                <p className="field-feedback" aria-live="polite">
+                  {playerFeedback}
+                </p>
               )}
             </form>
 

@@ -200,6 +200,14 @@ input:focus {
   white-space: nowrap;
 }
 
+.field-feedback {
+  margin: 10px 0 0;
+  color: #52614f;
+  font-size: 0.88rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
 .chip-list {
   display: flex;
   flex-wrap: wrap;
