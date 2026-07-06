@@ -175,7 +175,10 @@ export function App() {
           <section className="panel results-panel" aria-label="Generated names">
             <div className="panel-heading">
               <h2>Name Ideas</h2>
-              <Sparkles size={20} aria-hidden="true" />
+              <div className="results-summary">
+                <span>{generatedNames.length} ideas</span>
+                <Sparkles size={20} aria-hidden="true" />
+              </div>
             </div>
 
             <div className="results-list">

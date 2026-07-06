@@ -124,6 +124,15 @@ h1 {
   font-size: 1.05rem;
 }
 
+.results-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #51604e;
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
 .icon-button {
   display: inline-grid;
   place-items: center;

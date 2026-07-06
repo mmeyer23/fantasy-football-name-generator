@@ -25,4 +25,29 @@ describe("generateNames", () => {
 
     expect(names).toContain("Game of Throws");
   });
+
+  it("returns a deep suggestion set for normal roster and keyword inputs", () => {
+    const ceedee = activePlayers.find((player) => player.id === "ceedee-lamb")!;
+    const pitts = activePlayers.find((player) => player.id === "kyle-pitts")!;
+
+    const names = generateNames([ceedee, pitts], ["Game of Thrones", "49ers"], "clean");
+
+    expect(names.length).toBeGreaterThanOrEqual(25);
+    expect(names.length).toBeLessThanOrEqual(50);
+    expect(names.map((result) => result.name)).toContain("Lamb Fiction");
+    expect(names.map((result) => result.name)).toContain("Pitts Fiction");
+  });
+
+  it("adds fallback pop-culture keyword ideas for custom keywords", () => {
+    const names = generateNames([], ["PNW"], "clean").map((result) => result.name);
+
+    expect(names).toContain("PNW League");
+    expect(names).toContain("Straight Outta PNW");
+  });
+
+  it("caps generated names at 50", () => {
+    const names = generateNames(activePlayers, ["Game of Thrones", "Marvel", "49ers", "PNW"], "explicit");
+
+    expect(names).toHaveLength(50);
+  });
 });
