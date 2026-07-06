@@ -31,11 +31,21 @@ describe("generateNames", () => {
     const pitts = activePlayers.find((player) => player.id === "kyle-pitts")!;
 
     const names = generateNames([ceedee, pitts], ["Game of Thrones", "49ers"], "clean");
+    const nameText = names.map((result) => result.name);
 
     expect(names.length).toBeGreaterThanOrEqual(25);
     expect(names.length).toBeLessThanOrEqual(50);
-    expect(names.map((result) => result.name)).toContain("Lamb Fiction");
-    expect(names.map((result) => result.name)).toContain("Pitts Fiction");
+    expect(nameText).toContain("The Lamb King");
+    expect(nameText).toContain("Pitts and Giggles");
+  });
+
+  it("rejects weak movie substitutions that do not make a real pun", () => {
+    const ceedee = activePlayers.find((player) => player.id === "ceedee-lamb")!;
+
+    const names = generateNames([ceedee], [], "clean").map((result) => result.name);
+
+    expect(names).not.toContain("The Fast and the Lamb");
+    expect(names).not.toContain("Lamb Fiction");
   });
 
   it("adds fallback pop-culture keyword ideas for custom keywords", () => {

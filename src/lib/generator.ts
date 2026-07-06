@@ -21,6 +21,8 @@ type ReferencePattern = {
   source: string;
   mode: ContentMode;
   build: (player: Player) => string;
+  appliesTo: (player: Player) => boolean;
+  explain: (player: Player) => string;
 };
 
 const MAX_GENERATED_NAMES = 50;
@@ -40,10 +42,10 @@ const playerTemplates: Record<string, Template[]> = {
       reason: "Turns Lamb into a movie-title reference."
     },
     {
-      name: "Lamb of Godwin",
+      name: "Lamb of God",
       mode: "clean",
       tags: ["music", "football"],
-      reason: "Blends Lamb with a band-name cadence and a football scoring nod."
+      reason: "Uses Lamb in a direct band-name reference."
     },
     {
       name: "CeeDee's TDs",
@@ -265,196 +267,236 @@ const keywordTemplates: Record<string, Template[]> = {
 
 const referencePatterns: ReferencePattern[] = [
   {
-    category: "movie",
-    source: "Pulp Fiction",
+    category: "football",
+    source: "Deep threat",
     mode: "clean",
-    build: (player) => `${player.lastName} Fiction`
-  },
-  {
-    category: "movie",
-    source: "The Dark Knight",
-    mode: "clean",
-    build: (player) => `The ${player.lastName} Knight`
-  },
-  {
-    category: "movie",
-    source: "Jurassic Park",
-    mode: "clean",
-    build: (player) => `Jurassic ${player.lastName}`
-  },
-  {
-    category: "movie",
-    source: "Star Wars",
-    mode: "clean",
-    build: (player) => `${player.lastName} Wars`
-  },
-  {
-    category: "movie",
-    source: "Lord of the Rings",
-    mode: "clean",
-    build: (player) => `Lord of the ${pluralize(player.lastName)}`
-  },
-  {
-    category: "movie",
-    source: "The Godfather",
-    mode: "clean",
-    build: (player) => `${player.lastName} Godfather`
-  },
-  {
-    category: "movie",
-    source: "Back to the Future",
-    mode: "clean",
-    build: (player) => `Back to the ${player.lastName}`
-  },
-  {
-    category: "movie",
-    source: "Ghostbusters",
-    mode: "clean",
-    build: (player) => `${player.lastName}busters`
-  },
-  {
-    category: "movie",
-    source: "The Bourne Identity",
-    mode: "clean",
-    build: (player) => `The ${player.lastName} Identity`
-  },
-  {
-    category: "movie",
-    source: "Raiders of the Lost Ark",
-    mode: "clean",
-    build: (player) => `Raiders of the Lost ${player.lastName}`
-  },
-  {
-    category: "movie",
-    source: "Finding Nemo",
-    mode: "clean",
-    build: (player) => `Finding ${player.firstName}`
-  },
-  {
-    category: "movie",
-    source: "Fight Club",
-    mode: "clean",
-    build: (player) => `${player.firstName} Club`
-  },
-  {
-    category: "movie",
-    source: "No Country for Old Men",
-    mode: "clean",
-    build: (player) => `No Country for Old ${pluralize(player.lastName)}`
-  },
-  {
-    category: "movie",
-    source: "The Fast and the Furious",
-    mode: "clean",
-    build: (player) => `The Fast and the ${player.lastName}`
-  },
-  {
-    category: "movie",
-    source: "Guardians of the Galaxy",
-    mode: "clean",
-    build: (player) => `Guardians of the ${player.lastName}`
-  },
-  {
-    category: "tv",
-    source: "The Last of Us",
-    mode: "clean",
-    build: (player) => `The Last of ${player.firstName}`
-  },
-  {
-    category: "tv",
-    source: "Breaking Bad",
-    mode: "clean",
-    build: (player) => `Breaking ${player.lastName}`
-  },
-  {
-    category: "tv",
-    source: "Stranger Things",
-    mode: "clean",
-    build: (player) => `Stranger ${pluralize(player.lastName)}`
-  },
-  {
-    category: "tv",
-    source: "Better Call Saul",
-    mode: "clean",
-    build: (player) => `Better Call ${player.firstName}`
-  },
-  {
-    category: "song",
-    source: "Uptown Funk",
-    mode: "clean",
-    build: (player) => `${player.lastName} Funk`
-  },
-  {
-    category: "song",
-    source: "Shake It Off",
-    mode: "clean",
-    build: (player) => `${player.lastName} It Off`
-  },
-  {
-    category: "song",
-    source: "Bad Romance",
-    mode: "clean",
-    build: (player) => `Bad ${player.lastName}`
-  },
-  {
-    category: "song",
-    source: "Sweet Caroline",
-    mode: "clean",
-    build: (player) => `Sweet ${player.firstName}`
-  },
-  {
-    category: "song",
-    source: "Can't Stop",
-    mode: "clean",
-    build: (player) => `Can't Stop ${player.lastName}`
-  },
-  {
-    category: "song",
-    source: "All Star",
-    mode: "clean",
-    build: (player) => `All-${player.team} ${player.lastName}`
-  },
-  {
-    category: "brand",
-    source: "Netflix",
-    mode: "clean",
-    build: (player) => `Netflix and ${player.lastName}`
-  },
-  {
-    category: "brand",
-    source: "Nike",
-    mode: "clean",
-    build: (player) => `Just ${player.lastName} It`
-  },
-  {
-    category: "brand",
-    source: "Taco Bell",
-    mode: "clean",
-    build: (player) => `Taco ${player.lastName}`
+    build: (player) => `${player.firstName} Deep Threat`,
+    appliesTo: (player) => hasTrait(player, "speed") || (player.position === "WR" && hasTrait(player, "air")),
+    explain: (player) => `Connects ${player.fullName} to a football role that fits fast wide receivers.`
   },
   {
     category: "slogan",
-    source: "Got Milk?",
+    source: "Route 66",
     mode: "clean",
-    build: (player) => `Got ${player.lastName}?`
+    build: (player) => `${player.firstName}'s Route 66`,
+    appliesTo: (player) => player.position === "WR" || player.position === "TE",
+    explain: (player) => `Uses ${player.fullName} in a route-running reference that fits receivers and tight ends.`
   },
   {
-    category: "slogan",
-    source: "Keep Calm and Carry On",
-    mode: "clean",
-    build: (player) => `Keep Calm and ${player.lastName} On`
-  },
-  {
-    category: "sports",
-    source: "Waiver wire",
-    mode: "clean",
-    build: (player) => `${player.lastName} on the Waiver Wire`
-  },
-  {
-    category: "sports",
+    category: "football",
     source: "End zone",
     mode: "clean",
-    build: (player) => `${player.firstName} Zone`
+    build: (player) => `${player.firstName} Zone`,
+    appliesTo: (player) => player.position === "QB" || player.position === "RB" || player.position === "WR" || player.position === "TE",
+    explain: (player) => `Uses ${player.firstName} in an end-zone scoring phrase.`
+  },
+  {
+    category: "movie",
+    source: "There Will Be Blood",
+    mode: "clean",
+    build: (player) => `There Will Be Hurts`,
+    appliesTo: (player) => player.id === "jalen-hurts",
+    explain: (player) => `Uses ${player.fullName}'s last name because "Hurts" naturally fits the movie title's tone.`
+  },
+  {
+    category: "movie",
+    source: "The Hurt Locker",
+    mode: "clean",
+    build: () => `Hurts Locker`,
+    appliesTo: (player) => player.id === "jalen-hurts",
+    explain: (player) => `Uses a direct sound and meaning connection between Hurts and the movie title.`
+  },
+  {
+    category: "movie",
+    source: "Home Alone",
+    mode: "clean",
+    build: () => `Mahomes Alone`,
+    appliesTo: (player) => player.id === "patrick-mahomes",
+    explain: (player) => `Uses Mahomes as a close soundalike for "home" in the movie title.`
+  },
+  {
+    category: "slogan",
+    source: "Home sweet home",
+    mode: "clean",
+    build: () => `Home Sweet Mahomes`,
+    appliesTo: (player) => player.id === "patrick-mahomes",
+    explain: (player) => `Uses Mahomes as a home soundalike in a familiar slogan.`
+  },
+  {
+    category: "movie",
+    source: "The Lion King",
+    mode: "clean",
+    build: () => `The Lamb King`,
+    appliesTo: (player) => player.id === "ceedee-lamb",
+    explain: (player) => `Uses Lamb as an animal-name swap in a recognizable animal-led movie title.`
+  },
+  {
+    category: "song",
+    source: "Mary Had a Little Lamb",
+    mode: "clean",
+    build: () => `CeeDee Had a Little Lamb`,
+    appliesTo: (player) => player.id === "ceedee-lamb",
+    explain: (player) => `Uses CeeDee Lamb with a direct nursery-rhyme reference to lamb.`
+  },
+  {
+    category: "brand",
+    source: "Lamborghini",
+    mode: "clean",
+    build: () => `Lamborghini CeeDee`,
+    appliesTo: (player) => player.id === "ceedee-lamb",
+    explain: (player) => `Uses the opening sound of Lamborghini with CeeDee Lamb's last name.`
+  },
+  {
+    category: "slogan",
+    source: "For the pits",
+    mode: "clean",
+    build: () => `Pitts and Giggles`,
+    appliesTo: (player) => player.id === "kyle-pitts",
+    explain: (player) => `Uses Pitts as a close soundalike for "fits" in a familiar phrase.`
+  },
+  {
+    category: "movie",
+    source: "Money Pit",
+    mode: "clean",
+    build: () => `The Money Pitts`,
+    appliesTo: (player) => player.id === "kyle-pitts",
+    explain: (player) => `Uses Pitts as a plural pit sound in a movie-title style phrase.`
+  },
+  {
+    category: "brand",
+    source: "Pitt Stop",
+    mode: "clean",
+    build: () => `Pitts Stop Crew`,
+    appliesTo: (player) => player.id === "kyle-pitts",
+    explain: (player) => `Uses Pitts as a pit-stop soundalike, which also feels sports-adjacent.`
+  },
+  {
+    category: "song",
+    source: "Ain't No Mountain High Enough",
+    mode: "clean",
+    build: () => `Ain't No Hill High Enough`,
+    appliesTo: (player) => player.id === "tyreek-hill",
+    explain: (player) => `Uses Hill because it naturally fits a mountain-themed song title.`
+  },
+  {
+    category: "tv",
+    source: "King of the Hill",
+    mode: "clean",
+    build: () => `King of the Hill`,
+    appliesTo: (player) => player.id === "tyreek-hill",
+    explain: (player) => `Uses Hill because it directly matches the TV title.`
+  },
+  {
+    category: "song",
+    source: "Run-DMC",
+    mode: "clean",
+    build: () => `Run CMC`,
+    appliesTo: (player) => player.id === "christian-mccaffrey",
+    explain: (player) => `Uses McCaffrey's common CMC nickname with a direct music-reference rhyme.`
+  },
+  {
+    category: "slogan",
+    source: "Run for your life",
+    mode: "clean",
+    build: () => `Run for Your CMC`,
+    appliesTo: (player) => player.id === "christian-mccaffrey",
+    explain: (player) => `Uses McCaffrey's CMC nickname in a running-back appropriate phrase.`
+  },
+  {
+    category: "song",
+    source: "Mr. Brightside",
+    mode: "clean",
+    build: () => `Mr. Sun God`,
+    appliesTo: (player) => player.id === "amon-ra-st-brown",
+    explain: (player) => `Uses Amon-Ra's Sun God nickname in a music-title style name.`
+  },
+  {
+    category: "movie",
+    source: "Remember the Titans",
+    mode: "clean",
+    build: () => `Remember the Sun God`,
+    appliesTo: (player) => player.id === "amon-ra-st-brown",
+    explain: (player) => `Uses Amon-Ra's Sun God nickname in a memorable sports-movie cadence.`
+  },
+  {
+    category: "song",
+    source: "Mrs. Robinson",
+    mode: "clean",
+    build: () => `Bijan Robinson`,
+    appliesTo: (player) => player.id === "bijan-robinson",
+    explain: (player) => `Uses Robinson's last name in a direct song-title reference.`
+  },
+  {
+    category: "brand",
+    source: "Grey Poupon",
+    mode: "clean",
+    build: () => `Bijan Poupon`,
+    appliesTo: (player) => player.id === "bijan-robinson",
+    explain: (player) => `Uses Bijan as a Dijon soundalike in a mustard-brand reference.`
+  },
+  {
+    category: "song",
+    source: "Bark at the Moon",
+    mode: "clean",
+    build: () => `Barkley at the Moon`,
+    appliesTo: (player) => player.id === "saquon-barkley",
+    explain: (player) => `Uses the bark sound inside Barkley with a song-title reference.`
+  },
+  {
+    category: "movie",
+    source: "Gone with the Wind",
+    mode: "clean",
+    build: () => `Saquon with the Wind`,
+    appliesTo: (player) => player.id === "saquon-barkley",
+    explain: (player) => `Uses Saquon's first name in a close movie-title cadence.`
+  },
+  {
+    category: "tv",
+    source: "All in the Family",
+    mode: "clean",
+    build: () => `Allen the Family`,
+    appliesTo: (player) => player.id === "josh-allen",
+    explain: (player) => `Uses Allen as a close soundalike in a classic TV-title phrase.`
+  },
+  {
+    category: "slogan",
+    source: "All in",
+    mode: "clean",
+    build: () => `All-In on Allen`,
+    appliesTo: (player) => player.id === "josh-allen",
+    explain: (player) => `Uses Allen because it starts with an "all-in" sound and fits a confident fantasy slogan.`
+  },
+  {
+    category: "song",
+    source: "Hot in Herre",
+    mode: "clean",
+    build: () => `Kelce in Here`,
+    appliesTo: (player) => player.id === "travis-kelce",
+    explain: (player) => `Uses Kelce as a rhythm fit in a recognizable song-title cadence.`
+  },
+  {
+    category: "brand",
+    source: "Kelsey Grammer",
+    mode: "clean",
+    build: () => `Kelce Grammar`,
+    appliesTo: (player) => player.id === "travis-kelce",
+    explain: (player) => `Uses Kelce as a close soundalike for Kelsey in a celebrity-name pun.`
+  },
+  {
+    category: "movie",
+    source: "Air Force One",
+    mode: "clean",
+    build: (player) => `Air ${player.lastName} One`,
+    appliesTo: (player) => player.position === "QB" || hasTrait(player, "air"),
+    explain: (player) => `Uses ${player.fullName} in an air-game reference that fits passers and aerial offenses.`
+  },
+  {
+    category: "football",
+    source: "Waiver wire",
+    mode: "clean",
+    build: (player) => `${player.lastName} on the Waiver Wire`,
+    appliesTo: (player) => hasTrait(player, "bench") || player.position === "RB" || player.position === "WR" || player.position === "TE",
+    explain: (player) => `Uses ${player.fullName} in a fantasy-football phrase rather than forcing a pop-culture swap.`
   }
 ];
 
@@ -499,13 +541,13 @@ function templatesForKeyword(keyword: string, mode: ContentMode): GeneratedName[
 function referenceTemplatesForPlayer(player: Player, mode: ContentMode): GeneratedName[] {
   return referencePatterns
     .filter((pattern) => mode === "explicit" || pattern.mode === "clean")
+    .filter((pattern) => pattern.appliesTo(player))
     .map((pattern) => ({
       name: pattern.build(player),
       source: player.fullName,
       mode: pattern.mode,
-      reason: `Scans the ${pattern.category} reference "${pattern.source}" and adapts it around ${player.fullName}.`
-    }))
-    .filter((generatedName) => isUsefulName(generatedName.name, player));
+      reason: pattern.explain(player)
+    }));
 }
 
 function referenceTemplatesForKeyword(keyword: string, mode: ContentMode): GeneratedName[] {
@@ -566,26 +608,6 @@ function normalizeKeyword(keyword: string): string {
     .trim();
 }
 
-function isUsefulName(name: string, player: Player): boolean {
-  const normalizedName = normalizeKeyword(name);
-  const normalizedFirst = normalizeKeyword(player.firstName);
-  const normalizedLast = normalizeKeyword(player.lastName);
-
-  return normalizedName.includes(normalizedFirst) || normalizedName.includes(normalizedLast);
-}
-
-function pluralize(value: string): string {
-  if (value.endsWith("s")) {
-    return value;
-  }
-
-  if (value.endsWith("y")) {
-    return `${value.slice(0, -1)}ies`;
-  }
-
-  return `${value}s`;
-}
-
 function titleCase(value: string): string {
   return value
     .split(" ")
@@ -603,6 +625,25 @@ function formatKeywordLabel(keyword: string): string {
 
   return titleCase(normalizeKeyword(trimmedKeyword));
 }
+
+function hasTrait(player: Player, trait: string): boolean {
+  return playerTraits[player.id]?.includes(trait) ?? false;
+}
+
+const playerTraits: Record<string, string[]> = {
+  "amon-ra-st-brown": ["air", "nickname", "sun"],
+  "bijan-robinson": ["run", "dijon"],
+  "ceedee-lamb": ["animal", "lamb", "receiver"],
+  "christian-mccaffrey": ["run", "cmc"],
+  "jalen-hurts": ["air", "hurt", "qb"],
+  "josh-allen": ["air", "all-in", "qb"],
+  "justin-jefferson": ["air", "receiver"],
+  "kyle-pitts": ["pit", "receiver"],
+  "patrick-mahomes": ["air", "home", "qb"],
+  "saquon-barkley": ["run", "bark"],
+  "travis-kelce": ["receiver", "soundalike"],
+  "tyreek-hill": ["speed", "hill", "receiver"]
+};
 
 function dedupe(names: GeneratedName[]): GeneratedName[] {
   const seen = new Set<string>();
