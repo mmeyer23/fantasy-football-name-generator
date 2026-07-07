@@ -154,6 +154,30 @@ describe("generateNames", () => {
     );
   });
 
+  it("generates a deep set from phrase families for a single player", () => {
+    const breece = activePlayers.find((player) => player.id === "breece-hall")!;
+
+    const names = generateNames([breece], [], "clean").map((result) => result.name);
+
+    expect(names.length).toBeGreaterThanOrEqual(18);
+    expect(names).toEqual(
+      expect.arrayContaining([
+        "Breece's Pieces",
+        "Breece's Cups",
+        "Breece Lightning",
+        "Breece Is the Word",
+        "Easy Breecey",
+        "Breece Mode",
+        "Breece Hall of Fame",
+        "Breece Hall Pass",
+        "Breece Hall Monitor",
+        "Hall or Nothing",
+        "Against Hall Odds",
+        "Hall the Small Things"
+      ])
+    );
+  });
+
   it("does not add broad waiver-wire filler to every skill player", () => {
     const breece = activePlayers.find((player) => player.id === "breece-hall")!;
     const ceedee = activePlayers.find((player) => player.id === "ceedee-lamb")!;
@@ -162,6 +186,8 @@ describe("generateNames", () => {
 
     expect(names).not.toContain("Hall on the Waiver Wire");
     expect(names).not.toContain("Lamb on the Waiver Wire");
+    expect(names).not.toContain("Breece Zone");
+    expect(names).not.toContain("CeeDee's Route 66");
   });
 
   it("uses shared reference phrases for players without custom pun profiles", () => {

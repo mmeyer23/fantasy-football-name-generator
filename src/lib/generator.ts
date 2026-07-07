@@ -31,8 +31,15 @@ type ReferencePhrase = {
   source: string;
   mode: ContentMode;
   targetSound: string;
-  build: (atom: PlayerPunAtom) => string;
+  build: (atom: PlayerPunAtom, player: Player) => string;
   explain: (player: Player, atom: PlayerPunAtom) => string;
+  variants?: ReferencePhraseVariant[];
+};
+
+type ReferencePhraseVariant = {
+  source: string;
+  build: (atom: PlayerPunAtom, player: Player) => string;
+  explain?: (player: Player, atom: PlayerPunAtom) => string;
 };
 
 type KeywordProfile = {
@@ -336,8 +343,14 @@ const playerPunProfiles: Record<string, PlayerPunProfile> = {
       {
         part: "first",
         replacement: "Breece",
-        soundsLike: ["reese"],
-        phraseHooks: ["Reese's Pieces"]
+        soundsLike: ["reese", "grease", "breeze", "breezy", "beast"],
+        phraseHooks: ["Reese's Pieces", "Grease Lightning", "Summer Breeze", "easy breezy", "beast mode"]
+      },
+      {
+        part: "last",
+        replacement: "Hall",
+        soundsLike: ["hall", "all"],
+        phraseHooks: ["Hall of Fame", "hall pass", "hall monitor", "all or nothing", "against all odds"]
       }
     ],
     templates: []
@@ -646,7 +659,83 @@ const referencePhrases: ReferencePhrase[] = [
     targetSound: "reese",
     build: (atom) => `${possessiveAtom(atom)} Pieces`,
     explain: (player, atom) =>
-      `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "reese")} soundalike in a candy reference.`
+      `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "reese")} soundalike in a candy reference.`,
+    variants: [
+      {
+        source: "Reese's Peanut Butter Cups",
+        build: (atom) => `${possessiveAtom(atom)} Cups`
+      },
+      {
+        source: "Reese's Puffs",
+        build: (atom) => `${possessiveAtom(atom)} Puffs`
+      },
+      {
+        source: "Reese's Take 5",
+        build: (atom) => `${possessiveAtom(atom)} Take Five`
+      }
+    ]
+  },
+  {
+    category: "movie",
+    source: "Grease Lightning",
+    mode: "clean",
+    targetSound: "grease",
+    build: (atom) => `${atom.replacement} Lightning`,
+    explain: (player, atom) =>
+      `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "grease")} soundalike in a movie-song title.`,
+    variants: [
+      {
+        source: "Grease is the word",
+        build: (atom) => `${atom.replacement} Is the Word`
+      },
+      {
+        source: "Grease Live",
+        build: (atom) => `${atom.replacement} Live`
+      }
+    ]
+  },
+  {
+    category: "song",
+    source: "Summer Breeze",
+    mode: "clean",
+    targetSound: "breeze",
+    build: (atom) => `Summer ${atom.replacement}`,
+    explain: (player, atom) =>
+      `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "breeze")} soundalike in a song title.`,
+    variants: [
+      {
+        source: "Catch a breeze",
+        build: (atom) => `Catch a ${atom.replacement}`
+      },
+      {
+        source: "Breeze through",
+        build: (atom) => `${atom.replacement} Through the Playoffs`
+      }
+    ]
+  },
+  {
+    category: "brand",
+    source: "Easy breezy",
+    mode: "clean",
+    targetSound: "breezy",
+    build: (atom) => `Easy ${atom.replacement}y`,
+    explain: (player, atom) =>
+      `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "breezy")} soundalike in a familiar slogan.`
+  },
+  {
+    category: "phrase",
+    source: "Beast mode",
+    mode: "clean",
+    targetSound: "beast",
+    build: (atom) => `${atom.replacement} Mode`,
+    explain: (player, atom) =>
+      `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "beast")} soundalike in a sports phrase.`,
+    variants: [
+      {
+        source: "Beauty and the Beast",
+        build: (atom) => `Beauty and the ${atom.replacement}`
+      }
+    ]
   },
   {
     category: "slogan",
@@ -786,7 +875,60 @@ const referencePhrases: ReferencePhrase[] = [
     mode: "clean",
     targetSound: "hall",
     build: (atom) => `${atom.replacement} of Fame`,
-    explain: (player, atom) => `Uses ${atom.replacement} from ${player.fullName} in a direct achievement phrase.`
+    explain: (player, atom) => `Uses ${atom.replacement} from ${player.fullName} in a direct achievement phrase.`,
+    variants: [
+      {
+        source: "Hall of Fame",
+        build: (atom, player) => `${player.firstName} ${atom.replacement} of Fame`
+      },
+      {
+        source: "Hall pass",
+        build: (atom) => `${atom.replacement} Pass`
+      },
+      {
+        source: "Hall pass",
+        build: (atom, player) => `${player.firstName} ${atom.replacement} Pass`
+      },
+      {
+        source: "Hall monitor",
+        build: (atom) => `${atom.replacement} Monitor`
+      },
+      {
+        source: "Hall monitor",
+        build: (atom, player) => `${player.firstName} ${atom.replacement} Monitor`
+      },
+      {
+        source: "Hall of Justice",
+        build: (atom) => `${atom.replacement} of Justice`
+      },
+      {
+        source: "Halls of Valhalla",
+        build: (atom, player) => `${player.firstName} ${pluralizeAtom(atom)} of Valhalla`
+      }
+    ]
+  },
+  {
+    category: "slogan",
+    source: "All or nothing",
+    mode: "clean",
+    targetSound: "all",
+    build: (atom) => `${atom.replacement} or Nothing`,
+    explain: (player, atom) =>
+      `Uses ${atom.replacement} from ${player.fullName} as an ${targetSoundLabel(atom, "all")} soundalike in a familiar phrase.`,
+    variants: [
+      {
+        source: "Against all odds",
+        build: (atom) => `Against ${atom.replacement} Odds`
+      },
+      {
+        source: "Above all else",
+        build: (atom) => `Above ${atom.replacement} Else`
+      },
+      {
+        source: "All the small things",
+        build: (atom) => `${atom.replacement} the Small Things`
+      }
+    ]
   },
   {
     category: "food",
@@ -852,7 +994,7 @@ const referencePatterns: ReferencePattern[] = [
     source: "Route 66",
     mode: "clean",
     build: (player) => `${player.firstName}'s Route 66`,
-    appliesTo: (player) => player.position === "WR" || player.position === "TE",
+    appliesTo: (player) => hasTrait(player, "route"),
     explain: (player) => `Uses ${player.fullName} in a route-running reference that fits receivers and tight ends.`
   },
   {
@@ -860,7 +1002,7 @@ const referencePatterns: ReferencePattern[] = [
     source: "End zone",
     mode: "clean",
     build: (player) => `${player.firstName} Zone`,
-    appliesTo: (player) => player.position === "QB" || player.position === "RB" || player.position === "WR" || player.position === "TE",
+    appliesTo: (player) => hasTrait(player, "end-zone"),
     explain: (player) => `Uses ${player.firstName} in an end-zone scoring phrase.`
   },
   {
@@ -1309,13 +1451,30 @@ function referencePhraseTemplatesForPlayer(player: Player, mode: ContentMode): G
     .flatMap((phrase) =>
       atoms
         .filter((atom) => atomMatchesReferencePhrase(atom, phrase))
-        .map((atom) => ({
-          name: phrase.build(atom),
-          source: player.fullName,
-          mode: phrase.mode,
-          reason: phrase.explain(player, atom)
-        }))
+        .flatMap((atom) => referencePhraseVariantsForAtom(player, atom, phrase))
     );
+}
+
+function referencePhraseVariantsForAtom(
+  player: Player,
+  atom: PlayerPunAtom,
+  phrase: ReferencePhrase
+): GeneratedName[] {
+  const baseReason = phrase.explain(player, atom);
+  const baseName: GeneratedName = {
+    name: phrase.build(atom, player),
+    source: player.fullName,
+    mode: phrase.mode,
+    reason: baseReason
+  };
+  const variants = (phrase.variants ?? []).map((variant) => ({
+    name: variant.build(atom, player),
+    source: player.fullName,
+    mode: phrase.mode,
+    reason: variant.explain?.(player, atom) ?? `${baseReason} Variant source: ${variant.source}.`
+  }));
+
+  return [baseName, ...variants];
 }
 
 function referenceTemplatesForPlayer(player: Player, mode: ContentMode): GeneratedName[] {
