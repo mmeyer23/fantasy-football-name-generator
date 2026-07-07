@@ -132,6 +132,38 @@ describe("generateNames", () => {
     expect(names).toContain("Bed, Bath, and Bijan");
   });
 
+  it("uses soundalike and association atoms instead of hard-coded final names", () => {
+    const players = [
+      "breece-hall",
+      "ceedee-lamb",
+      "jahmyr-gibbs",
+      "justin-jefferson",
+      "kyren-williams"
+    ].map((id) => activePlayers.find((player) => player.id === id)!);
+
+    const names = generateNames(players, [], "clean").map((result) => result.name);
+
+    expect(names).toEqual(
+      expect.arrayContaining([
+        "Breece's Pieces",
+        "CeeDeeCee Guidelines",
+        "The Man in the Jahmyrror",
+        "We Built This Griddy",
+        "For Kyren Out Loud"
+      ])
+    );
+  });
+
+  it("does not add broad waiver-wire filler to every skill player", () => {
+    const breece = activePlayers.find((player) => player.id === "breece-hall")!;
+    const ceedee = activePlayers.find((player) => player.id === "ceedee-lamb")!;
+
+    const names = generateNames([breece, ceedee], [], "clean").map((result) => result.name);
+
+    expect(names).not.toContain("Hall on the Waiver Wire");
+    expect(names).not.toContain("Lamb on the Waiver Wire");
+  });
+
   it("uses shared reference phrases for players without custom pun profiles", () => {
     const players = [
       "jordan-love",

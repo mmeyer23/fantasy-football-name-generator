@@ -331,6 +331,17 @@ const keywordTemplates: Record<string, Template[]> = {
 };
 
 const playerPunProfiles: Record<string, PlayerPunProfile> = {
+  "breece-hall": {
+    atoms: [
+      {
+        part: "first",
+        replacement: "Breece",
+        soundsLike: ["reese"],
+        phraseHooks: ["Reese's Pieces"]
+      }
+    ],
+    templates: []
+  },
   "bijan-robinson": {
     atoms: [
       {
@@ -338,6 +349,23 @@ const playerPunProfiles: Record<string, PlayerPunProfile> = {
         replacement: "Bijan",
         soundsLike: ["dijon", "beyond"],
         phraseHooks: ["Dijon mustard", "Bed Bath & Beyond", "to infinity and beyond"]
+      }
+    ],
+    templates: []
+  },
+  "ceedee-lamb": {
+    atoms: [
+      {
+        part: "first",
+        replacement: "CeeDee",
+        soundsLike: ["cd"],
+        phraseHooks: ["CD", "CD-ROM"]
+      },
+      {
+        part: "first",
+        replacement: "CeeDeeCee",
+        soundsLike: ["cdc"],
+        phraseHooks: ["CDC Guidelines"]
       }
     ],
     templates: []
@@ -359,8 +387,25 @@ const playerPunProfiles: Record<string, PlayerPunProfile> = {
     ],
     templates: []
   },
+  "justin-jefferson": {
+    atoms: [
+      {
+        part: "alias",
+        replacement: "Griddy",
+        soundsLike: ["city"],
+        phraseHooks: ["We Built This City"]
+      }
+    ],
+    templates: []
+  },
   "jahmyr-gibbs": {
     atoms: [
+      {
+        part: "first",
+        replacement: "Jahmyr",
+        soundsLike: ["mirror"],
+        phraseHooks: ["Man in the Mirror"]
+      },
       {
         part: "last",
         replacement: "Gibbs",
@@ -388,6 +433,17 @@ const playerPunProfiles: Record<string, PlayerPunProfile> = {
         reason: "Uses Gibbs as a gives soundalike in a recognizable song-title cadence."
       }
     ]
+  },
+  "kyren-williams": {
+    atoms: [
+      {
+        part: "first",
+        replacement: "Kyren",
+        soundsLike: ["crying"],
+        phraseHooks: ["for crying out loud"]
+      }
+    ],
+    templates: []
   },
   "drake-maye": {
     atoms: [
@@ -582,6 +638,51 @@ const referencePhrases: ReferencePhrase[] = [
     build: (atom) => `${atom.replacement} Mustard`,
     explain: (player, atom) =>
       `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "dijon")} soundalike in a food phrase.`
+  },
+  {
+    category: "candy",
+    source: "Reese's Pieces",
+    mode: "clean",
+    targetSound: "reese",
+    build: (atom) => `${possessiveAtom(atom)} Pieces`,
+    explain: (player, atom) =>
+      `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "reese")} soundalike in a candy reference.`
+  },
+  {
+    category: "slogan",
+    source: "CDC Guidelines",
+    mode: "clean",
+    targetSound: "cdc",
+    build: (atom) => `${atom.replacement} Guidelines`,
+    explain: (player, atom) =>
+      `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "cdc")} soundalike in an acronym phrase.`
+  },
+  {
+    category: "song",
+    source: "Man in the Mirror",
+    mode: "clean",
+    targetSound: "mirror",
+    build: (atom) => `The Man in the ${atom.replacement}ror`,
+    explain: (player, atom) =>
+      `Uses ${atom.replacement} from ${player.fullName} as the opening sound in a mirror-themed song title.`
+  },
+  {
+    category: "song",
+    source: "We Built This City",
+    mode: "clean",
+    targetSound: "city",
+    build: (atom) => `We Built This ${atom.replacement}`,
+    explain: (player, atom) =>
+      `Uses ${atom.replacement} from ${player.fullName}'s player association as a ${targetSoundLabel(atom, "city")} soundalike in a song title.`
+  },
+  {
+    category: "phrase",
+    source: "For crying out loud",
+    mode: "clean",
+    targetSound: "crying",
+    build: (atom) => `For ${atom.replacement} Out Loud`,
+    explain: (player, atom) =>
+      `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "crying")} soundalike in a familiar phrase.`
   },
   {
     category: "movie",
@@ -967,8 +1068,8 @@ const referencePatterns: ReferencePattern[] = [
     source: "Waiver wire",
     mode: "clean",
     build: (player) => `${player.lastName} on the Waiver Wire`,
-    appliesTo: (player) => hasTrait(player, "bench") || player.position === "RB" || player.position === "WR" || player.position === "TE",
-    explain: (player) => `Uses ${player.fullName} in a fantasy-football phrase rather than forcing a pop-culture swap.`
+    appliesTo: (player) => hasTrait(player, "waiver"),
+    explain: (player) => `Uses ${player.fullName} in a waiver-wire phrase because the player is explicitly marked as a waiver theme fit.`
   }
 ];
 
@@ -1368,6 +1469,10 @@ function targetSoundLabel(atom: PlayerPunAtom, targetSound: string): string {
 
 function pluralizeAtom(atom: PlayerPunAtom): string {
   return atom.replacement.endsWith("s") ? atom.replacement : `${atom.replacement}s`;
+}
+
+function possessiveAtom(atom: PlayerPunAtom): string {
+  return atom.replacement.endsWith("s") ? `${atom.replacement}'` : `${atom.replacement}'s`;
 }
 
 export function isAllowedForMode(generatedName: GeneratedName, mode: ContentMode): boolean {
