@@ -6,6 +6,7 @@ dist/
 build/
 .next/
 out/
+.vite/
 
 # Logs
 *.log
@@ -28,4 +29,3 @@ pnpm-debug.log*
 coverage/
 playwright-report/
 test-results/
-
