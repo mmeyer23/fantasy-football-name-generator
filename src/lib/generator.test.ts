@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { activePlayers } from "../data/players";
-import { generateNames } from "./generator";
+import { generateNames, isAllowedForMode, isCleanSafeName } from "./generator";
 
 describe("generateNames", () => {
   it("filters explicit names out of clean mode", () => {
@@ -18,6 +18,29 @@ describe("generateNames", () => {
     const explicitNames = generateNames([ceedee], [], "explicit").map((result) => result.name);
 
     expect(explicitNames).toContain("CeeDeez Nuts");
+  });
+
+  it("keeps adult keyword humor out of clean mode", () => {
+    const cleanNames = generateNames([], ["losers"], "clean").map((result) => result.name);
+    const explicitNames = generateNames([], ["losers"], "explicit").map((result) => result.name);
+
+    expect(cleanNames).not.toContain("Sacks and the City");
+    expect(explicitNames).toContain("Sacks and the City");
+  });
+
+  it("blocks adult terms in clean mode even if a result is mistagged", () => {
+    expect(isCleanSafeName("CeeDeez Nuts")).toBe(false);
+    expect(
+      isAllowedForMode(
+        {
+          name: "CeeDeez Nuts",
+          source: "CeeDee Lamb",
+          mode: "clean",
+          reason: "This should still fail the clean safety gate."
+        },
+        "clean"
+      )
+    ).toBe(false);
   });
 
   it("uses matching keyword templates", () => {

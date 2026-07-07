@@ -27,6 +27,21 @@ type ReferencePattern = {
 
 const MAX_GENERATED_NAMES = 50;
 
+const cleanModeBlockedTerms = [
+  "balls",
+  "boner",
+  "boob",
+  "butt",
+  "deez",
+  "dick",
+  "naked",
+  "nuts",
+  "sex",
+  "sucks"
+];
+
+const cleanModeBlockedPhrases = ["sacks and the city"];
+
 const playerTemplates: Record<string, Template[]> = {
   "ceedee-lamb": [
     {
@@ -261,6 +276,12 @@ const keywordTemplates: Record<string, Template[]> = {
       mode: "clean",
       tags: ["movie", "league-joke"],
       reason: "Uses a movie-title rhythm for a bad-luck fantasy team joke."
+    },
+    {
+      name: "Sacks and the City",
+      mode: "explicit",
+      tags: ["tv", "adult-humor", "football"],
+      reason: "Uses an adult sitcom title as the setup for a football sack pun."
     }
   ]
 };
@@ -512,7 +533,7 @@ export function generateNames(
     ...keywords.flatMap((keyword) => referenceTemplatesForKeyword(keyword, mode))
   ];
 
-  return dedupe(names).slice(0, MAX_GENERATED_NAMES);
+  return dedupe(names).filter((name) => isAllowedForMode(name, mode)).slice(0, MAX_GENERATED_NAMES);
 }
 
 function templatesForPlayer(player: Player, mode: ContentMode): GeneratedName[] {
@@ -628,6 +649,29 @@ function formatKeywordLabel(keyword: string): string {
 
 function hasTrait(player: Player, trait: string): boolean {
   return playerTraits[player.id]?.includes(trait) ?? false;
+}
+
+export function isAllowedForMode(generatedName: GeneratedName, mode: ContentMode): boolean {
+  if (mode === "explicit") {
+    return true;
+  }
+
+  if (generatedName.mode === "explicit") {
+    return false;
+  }
+
+  return isCleanSafeName(generatedName.name);
+}
+
+export function isCleanSafeName(name: string): boolean {
+  const normalizedName = normalizeKeyword(name);
+  const words = normalizedName.split(" ").filter(Boolean);
+
+  if (cleanModeBlockedPhrases.some((phrase) => normalizedName.includes(phrase))) {
+    return false;
+  }
+
+  return !words.some((word) => cleanModeBlockedTerms.includes(word));
 }
 
 const playerTraits: Record<string, string[]> = {
