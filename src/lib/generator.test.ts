@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { activePlayers } from "../data/players";
-import { generateNames, isAllowedForMode, isCleanSafeName } from "./generator";
+import { generateNames, getPlayerPunAtoms, isAllowedForMode, isCleanSafeName } from "./generator";
 
 describe("generateNames", () => {
   it("filters explicit names out of clean mode", () => {
@@ -91,6 +91,35 @@ describe("generateNames", () => {
     expect(names).toContain("Baby Back Gibbs");
     expect(names).toContain("Mayehem");
     expect(names).toContain("McConkey Kong");
+    expect(names).toContain("Pin the Tail on the McConkey");
+    expect(names).toContain("McConkey Kong Country");
+    expect(names).toContain("McConkey Tonk Blues");
+    expect(names).toContain("Laddiator");
+  });
+
+  it("creates first-name and last-name pun atoms for every active player", () => {
+    for (const player of activePlayers) {
+      const atoms = getPlayerPunAtoms(player);
+
+      expect(atoms).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ part: "first", replacement: player.firstName }),
+          expect.objectContaining({ part: "last", replacement: player.lastName })
+        ])
+      );
+    }
+  });
+
+  it("adds curated Ladd McConkey atoms for reference-phrase matching", () => {
+    const mcconkey = activePlayers.find((player) => player.id === "ladd-mcconkey")!;
+    const atoms = getPlayerPunAtoms(mcconkey);
+    const sounds = atoms.flatMap((atom) => atom.soundsLike);
+    const hooks = atoms.flatMap((atom) => atom.phraseHooks);
+
+    expect(sounds).toEqual(expect.arrayContaining(["lad", "gladiator", "monkey", "donkey", "honky", "key"]));
+    expect(hooks).toEqual(
+      expect.arrayContaining(["Pin the Tail on the Donkey", "Donkey Kong Country", "Honky Tonk Blues", "Gladiator"])
+    );
   });
 
   it("combines selected players with arbitrary custom keywords using safe theme formats", () => {

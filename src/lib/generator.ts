@@ -43,9 +43,17 @@ type CustomKeywordProfile = {
   original: string;
 };
 
+export type PlayerNamePart = "first" | "last" | "alias";
+
+export type PlayerPunAtom = {
+  part: PlayerNamePart;
+  replacement: string;
+  soundsLike: string[];
+  phraseHooks: string[];
+};
+
 type PlayerPunProfile = {
-  soundalikes: string[];
-  hooks: string[];
+  atoms: PlayerPunAtom[];
   templates: Template[];
 };
 
@@ -315,8 +323,14 @@ const keywordTemplates: Record<string, Template[]> = {
 
 const playerPunProfiles: Record<string, PlayerPunProfile> = {
   "jahmyr-gibbs": {
-    soundalikes: ["ribs", "gives"],
-    hooks: ["Baby Back Ribs", "give and take"],
+    atoms: [
+      {
+        part: "last",
+        replacement: "Gibbs",
+        soundsLike: ["ribs", "gives"],
+        phraseHooks: ["Baby Back Ribs", "give and take", "gimme the loot"]
+      }
+    ],
     templates: [
       {
         name: "Baby Back Gibbs",
@@ -339,8 +353,20 @@ const playerPunProfiles: Record<string, PlayerPunProfile> = {
     ]
   },
   "drake-maye": {
-    soundalikes: ["may", "mayhem"],
-    hooks: ["mayhem", "come what may", "may the force be with you"],
+    atoms: [
+      {
+        part: "last",
+        replacement: "Maye",
+        soundsLike: ["may", "mayhem"],
+        phraseHooks: ["mayhem", "come what may", "may the force be with you"]
+      },
+      {
+        part: "first",
+        replacement: "Drake",
+        soundsLike: ["drake"],
+        phraseHooks: ["Drake", "Hotline Bling", "Started from the Bottom"]
+      }
+    ],
     templates: [
       {
         name: "Mayehem",
@@ -363,8 +389,26 @@ const playerPunProfiles: Record<string, PlayerPunProfile> = {
     ]
   },
   "ladd-mcconkey": {
-    soundalikes: ["monkey", "donkey"],
-    hooks: ["Donkey Kong", "monkey business"],
+    atoms: [
+      {
+        part: "first",
+        replacement: "Ladd",
+        soundsLike: ["lad", "glad", "gladiator"],
+        phraseHooks: ["lad", "glad", "Gladiator"]
+      },
+      {
+        part: "last",
+        replacement: "McConkey",
+        soundsLike: ["monkey", "donkey", "honky", "conk", "key"],
+        phraseHooks: [
+          "Donkey Kong",
+          "Donkey Kong Country",
+          "Pin the Tail on the Donkey",
+          "Honky Tonk Blues",
+          "monkey business"
+        ]
+      }
+    ],
     templates: [
       {
         name: "McConkey Kong",
@@ -377,6 +421,30 @@ const playerPunProfiles: Record<string, PlayerPunProfile> = {
         mode: "clean",
         tags: ["phrase", "soundalike"],
         reason: "Uses McConkey as a monkey soundalike in the phrase monkey business."
+      },
+      {
+        name: "McConkey Kong Country",
+        mode: "clean",
+        tags: ["game", "soundalike"],
+        reason: "Uses McConkey as a donkey soundalike in the Donkey Kong Country game title."
+      },
+      {
+        name: "Pin the Tail on the McConkey",
+        mode: "clean",
+        tags: ["game", "soundalike"],
+        reason: "Uses McConkey as a donkey soundalike in the party-game phrase."
+      },
+      {
+        name: "McConkey Tonk Blues",
+        mode: "clean",
+        tags: ["song", "soundalike"],
+        reason: "Uses McConkey as a honky soundalike in a recognizable country-song phrase."
+      },
+      {
+        name: "Laddiator",
+        mode: "clean",
+        tags: ["movie", "soundalike"],
+        reason: "Blends Ladd into Gladiator with a clear first-name sound hook."
       },
       {
         name: "No McConkeying Around",
@@ -816,8 +884,38 @@ function templatesForPlayerPunProfile(player: Player, mode: ContentMode): Genera
       name: template.name,
       source: player.fullName,
       mode: template.mode,
-      reason: `${template.reason} Sound hooks: ${profile.soundalikes.join(", ")}.`
+      reason: `${template.reason} Sound hooks: ${summarizePunAtoms(getPlayerPunAtoms(player))}.`
     }));
+}
+
+export function getPlayerPunAtoms(player: Player): PlayerPunAtom[] {
+  const profile = playerPunProfiles[player.id];
+  const baselineAtoms: PlayerPunAtom[] = [
+    {
+      part: "first",
+      replacement: player.firstName,
+      soundsLike: [player.firstName],
+      phraseHooks: [player.firstName]
+    },
+    {
+      part: "last",
+      replacement: player.lastName,
+      soundsLike: [player.lastName],
+      phraseHooks: [player.lastName]
+    },
+    ...(player.aliases ?? []).map((alias): PlayerPunAtom => ({
+      part: "alias",
+      replacement: alias,
+      soundsLike: [alias],
+      phraseHooks: [alias]
+    }))
+  ];
+
+  return dedupePunAtoms([...baselineAtoms, ...(profile?.atoms ?? [])]);
+}
+
+function summarizePunAtoms(atoms: PlayerPunAtom[]): string {
+  return atoms.flatMap((atom) => atom.soundsLike).join(", ");
 }
 
 function referenceTemplatesForPlayer(player: Player, mode: ContentMode): GeneratedName[] {
@@ -1002,6 +1100,23 @@ function dedupe(names: GeneratedName[]): GeneratedName[] {
 
   return names.filter((generatedName) => {
     const key = generatedName.name.toLowerCase();
+    if (seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  });
+}
+
+function dedupePunAtoms(atoms: PlayerPunAtom[]): PlayerPunAtom[] {
+  const seen = new Set<string>();
+
+  return atoms.filter((atom) => {
+    const key = `${atom.part}:${normalizeKeyword(atom.replacement)}:${atom.soundsLike
+      .map((sound) => normalizeKeyword(sound))
+      .join("|")}`;
+
     if (seen.has(key)) {
       return false;
     }
