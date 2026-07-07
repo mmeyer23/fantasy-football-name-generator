@@ -122,6 +122,16 @@ describe("generateNames", () => {
     );
   });
 
+  it("generates names from reference phrases matched to player pun atoms", () => {
+    const mccaffrey = activePlayers.find((player) => player.id === "christian-mccaffrey")!;
+    const bijan = activePlayers.find((player) => player.id === "bijan-robinson")!;
+
+    const names = generateNames([mccaffrey, bijan], [], "clean").map((result) => result.name);
+
+    expect(names).toContain("I Think I Pulled McCaff");
+    expect(names).toContain("Bed, Bath, and Bijan");
+  });
+
   it("combines selected players with arbitrary custom keywords using safe theme formats", () => {
     const ceedee = activePlayers.find((player) => player.id === "ceedee-lamb")!;
 

@@ -26,6 +26,15 @@ type ReferencePattern = {
   explain: (player: Player) => string;
 };
 
+type ReferencePhrase = {
+  category: string;
+  source: string;
+  mode: ContentMode;
+  targetSound: string;
+  build: (atom: PlayerPunAtom) => string;
+  explain: (player: Player, atom: PlayerPunAtom) => string;
+};
+
 type KeywordProfile = {
   id: string;
   label: string;
@@ -322,6 +331,34 @@ const keywordTemplates: Record<string, Template[]> = {
 };
 
 const playerPunProfiles: Record<string, PlayerPunProfile> = {
+  "bijan-robinson": {
+    atoms: [
+      {
+        part: "first",
+        replacement: "Bijan",
+        soundsLike: ["dijon", "beyond"],
+        phraseHooks: ["Dijon mustard", "Bed Bath & Beyond", "to infinity and beyond"]
+      }
+    ],
+    templates: []
+  },
+  "christian-mccaffrey": {
+    atoms: [
+      {
+        part: "alias",
+        replacement: "McCaff",
+        soundsLike: ["calf", "mccafe"],
+        phraseHooks: ["pulled a calf", "McCafe"]
+      },
+      {
+        part: "alias",
+        replacement: "CMC",
+        soundsLike: ["run dmc", "cmc"],
+        phraseHooks: ["Run-DMC"]
+      }
+    ],
+    templates: []
+  },
   "jahmyr-gibbs": {
     atoms: [
       {
@@ -455,6 +492,98 @@ const playerPunProfiles: Record<string, PlayerPunProfile> = {
     ]
   }
 };
+
+const referencePhrases: ReferencePhrase[] = [
+  {
+    category: "brand",
+    source: "Bed Bath & Beyond",
+    mode: "clean",
+    targetSound: "beyond",
+    build: (atom) => `Bed, Bath, and ${atom.replacement}`,
+    explain: (player, atom) =>
+      `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "beyond")} soundalike in a familiar brand phrase.`
+  },
+  {
+    category: "phrase",
+    source: "Pulled a calf",
+    mode: "clean",
+    targetSound: "calf",
+    build: (atom) => `I Think I Pulled ${atom.replacement}`,
+    explain: (player, atom) =>
+      `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "calf")} soundalike in an injury phrase.`
+  },
+  {
+    category: "game",
+    source: "Donkey Kong Country",
+    mode: "clean",
+    targetSound: "donkey",
+    build: (atom) => `${atom.replacement} Kong Country`,
+    explain: (player, atom) =>
+      `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "donkey")} soundalike in the game title.`
+  },
+  {
+    category: "game",
+    source: "Pin the Tail on the Donkey",
+    mode: "clean",
+    targetSound: "donkey",
+    build: (atom) => `Pin the Tail on the ${atom.replacement}`,
+    explain: (player, atom) =>
+      `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "donkey")} soundalike in the party-game phrase.`
+  },
+  {
+    category: "song",
+    source: "Honky Tonk Blues",
+    mode: "clean",
+    targetSound: "honky",
+    build: (atom) => `${atom.replacement} Tonk Blues`,
+    explain: (player, atom) =>
+      `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "honky")} soundalike in a country-song phrase.`
+  },
+  {
+    category: "movie",
+    source: "Gladiator",
+    mode: "clean",
+    targetSound: "gladiator",
+    build: (atom) => `${atom.replacement}iator`,
+    explain: (player, atom) =>
+      `Blends ${atom.replacement} from ${player.fullName} into the Gladiator title because the opening sound matches.`
+  },
+  {
+    category: "food",
+    source: "Baby Back Ribs",
+    mode: "clean",
+    targetSound: "ribs",
+    build: (atom) => `Baby Back ${atom.replacement}`,
+    explain: (player, atom) =>
+      `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "ribs")} soundalike in a food phrase.`
+  },
+  {
+    category: "movie",
+    source: "May the Force Be With You",
+    mode: "clean",
+    targetSound: "may",
+    build: (atom) => `${atom.replacement} the Force Be With You`,
+    explain: (player, atom) =>
+      `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "may")} soundalike in a movie quote.`
+  },
+  {
+    category: "song",
+    source: "Run-DMC",
+    mode: "clean",
+    targetSound: "run dmc",
+    build: (atom) => `Run ${atom.replacement}`,
+    explain: (player, atom) => `Uses ${atom.replacement} from ${player.fullName} in a direct Run-DMC music reference.`
+  },
+  {
+    category: "food",
+    source: "Dijon mustard",
+    mode: "clean",
+    targetSound: "dijon",
+    build: (atom) => `${atom.replacement} Mustard`,
+    explain: (player, atom) =>
+      `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "dijon")} soundalike in a food phrase.`
+  }
+];
 
 const referencePatterns: ReferencePattern[] = [
   {
@@ -788,6 +917,7 @@ export function generateNames(
   const customKeywordProfiles = resolveCustomKeywordProfiles(keywords, activeKeywordProfiles);
   const names = [
     ...players.flatMap((player) => templatesForPlayerPunProfile(player, mode)),
+    ...players.flatMap((player) => referencePhraseTemplatesForPlayer(player, mode)),
     ...players.flatMap((player) => templatesForPlayer(player, mode)),
     ...keywords.flatMap((keyword) => templatesForKeyword(keyword, mode)),
     ...players.flatMap((player) =>
@@ -916,6 +1046,23 @@ export function getPlayerPunAtoms(player: Player): PlayerPunAtom[] {
 
 function summarizePunAtoms(atoms: PlayerPunAtom[]): string {
   return atoms.flatMap((atom) => atom.soundsLike).join(", ");
+}
+
+function referencePhraseTemplatesForPlayer(player: Player, mode: ContentMode): GeneratedName[] {
+  const atoms = getPlayerPunAtoms(player);
+
+  return referencePhrases
+    .filter((phrase) => mode === "explicit" || phrase.mode === "clean")
+    .flatMap((phrase) =>
+      atoms
+        .filter((atom) => atomMatchesReferencePhrase(atom, phrase))
+        .map((atom) => ({
+          name: phrase.build(atom),
+          source: player.fullName,
+          mode: phrase.mode,
+          reason: phrase.explain(player, atom)
+        }))
+    );
 }
 
 function referenceTemplatesForPlayer(player: Player, mode: ContentMode): GeneratedName[] {
@@ -1055,6 +1202,16 @@ function formatKeywordLabel(keyword: string): string {
 
 function hasTrait(player: Player, trait: string): boolean {
   return playerTraits[player.id]?.includes(trait) ?? false;
+}
+
+function atomMatchesReferencePhrase(atom: PlayerPunAtom, phrase: ReferencePhrase): boolean {
+  const normalizedTarget = normalizeKeyword(phrase.targetSound);
+
+  return atom.soundsLike.some((sound) => normalizeKeyword(sound) === normalizedTarget);
+}
+
+function targetSoundLabel(atom: PlayerPunAtom, targetSound: string): string {
+  return atom.soundsLike.find((sound) => normalizeKeyword(sound) === normalizeKeyword(targetSound)) ?? targetSound;
 }
 
 export function isAllowedForMode(generatedName: GeneratedName, mode: ContentMode): boolean {
