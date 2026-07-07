@@ -38,7 +38,13 @@ type KeywordProfile = {
   }>;
 };
 
+type CustomKeywordProfile = {
+  label: string;
+  original: string;
+};
+
 const MAX_GENERATED_NAMES = 50;
+const MIN_CUSTOM_KEYWORD_LENGTH = 2;
 
 const cleanModeBlockedTerms = [
   "balls",
@@ -54,6 +60,8 @@ const cleanModeBlockedTerms = [
 ];
 
 const cleanModeBlockedPhrases = ["sacks and the city"];
+
+const ignoredCustomKeywords = new Set(["a", "an", "and", "for", "of", "or", "the", "with"]);
 
 const playerTemplates: Record<string, Template[]> = {
   "ceedee-lamb": [
@@ -628,14 +636,18 @@ export function generateNames(
   mode: ContentMode
 ): GeneratedName[] {
   const activeKeywordProfiles = resolveKeywordProfiles(keywords);
+  const customKeywordProfiles = resolveCustomKeywordProfiles(keywords, activeKeywordProfiles);
   const names = [
     ...players.flatMap((player) => templatesForPlayer(player, mode)),
     ...keywords.flatMap((keyword) => templatesForKeyword(keyword, mode)),
     ...players.flatMap((player) =>
       activeKeywordProfiles.flatMap((profile) => templatesForPlayerKeyword(player, profile, mode))
     ),
+    ...players.flatMap((player) =>
+      customKeywordProfiles.flatMap((profile) => templatesForCustomPlayerKeyword(player, profile, mode))
+    ),
     ...players.flatMap((player) => referenceTemplatesForPlayer(player, mode)),
-    ...keywords.flatMap((keyword) => referenceTemplatesForKeyword(keyword, mode))
+    ...customKeywordProfiles.flatMap((profile) => referenceTemplatesForCustomKeyword(profile, mode))
   ];
 
   return dedupe(names).filter((name) => isAllowedForMode(name, mode)).slice(0, MAX_GENERATED_NAMES);
@@ -678,6 +690,37 @@ function templatesForPlayerKeyword(player: Player, keywordProfile: KeywordProfil
     }));
 }
 
+function templatesForCustomPlayerKeyword(
+  player: Player,
+  keywordProfile: CustomKeywordProfile,
+  mode: ContentMode
+): GeneratedName[] {
+  const templates: Template[] = [
+    {
+      name: `${player.lastName}'s ${keywordProfile.label} Club`,
+      mode: "clean",
+      tags: ["custom-keyword", "club"],
+      reason: `Uses "${keywordProfile.original}" as a custom theme owned by ${player.fullName}.`
+    },
+    {
+      name: `${player.firstName}'s ${keywordProfile.label} Playbook`,
+      mode: "clean",
+      tags: ["custom-keyword", "football"],
+      reason: `Uses "${keywordProfile.original}" as a custom playbook theme around ${player.fullName}.`
+    }
+  ];
+
+  return templates
+    .filter((template) => mode === "explicit" || template.mode === "clean")
+    .map((template) => ({
+      name: template.name,
+      source: `${player.fullName} + ${keywordProfile.label}`,
+      mode: template.mode,
+      reason: template.reason,
+      keyword: keywordProfile.label
+    }));
+}
+
 function referenceTemplatesForPlayer(player: Player, mode: ContentMode): GeneratedName[] {
   return referencePatterns
     .filter((pattern) => mode === "explicit" || pattern.mode === "clean")
@@ -690,44 +733,40 @@ function referenceTemplatesForPlayer(player: Player, mode: ContentMode): Generat
     }));
 }
 
-function referenceTemplatesForKeyword(keyword: string, mode: ContentMode): GeneratedName[] {
-  const normalizedKeyword = normalizeKeyword(keyword);
-  const keywordLabel = formatKeywordLabel(keyword);
-
-  if (!keywordLabel) {
-    return [];
-  }
-
+function referenceTemplatesForCustomKeyword(
+  keywordProfile: CustomKeywordProfile,
+  mode: ContentMode
+): GeneratedName[] {
   const templates: Template[] = [
     {
-      name: `${keywordLabel} League`,
+      name: `${keywordProfile.label} League`,
       mode: "clean",
       tags: ["slogan"],
-      reason: `Turns "${keyword}" into a league-name style slogan.`
+      reason: `Uses "${keywordProfile.original}" as a custom league theme.`
     },
     {
-      name: `The ${keywordLabel} Bowl`,
+      name: `The ${keywordProfile.label} Bowl`,
       mode: "clean",
       tags: ["sports"],
-      reason: `Uses "${keyword}" as the hook for a championship-style name.`
+      reason: `Uses "${keywordProfile.original}" as the hook for a championship-style name.`
     },
     {
-      name: `${keywordLabel} and Chill`,
+      name: `${keywordProfile.label} Playbook`,
       mode: "clean",
-      tags: ["brand", "slogan"],
-      reason: `Adapts a streaming-era slogan around "${keyword}".`
+      tags: ["football"],
+      reason: `Uses "${keywordProfile.original}" as a football playbook theme.`
     },
     {
-      name: `Straight Outta ${keywordLabel}`,
+      name: `${keywordProfile.label} Crew`,
       mode: "clean",
-      tags: ["music", "movie"],
-      reason: `Uses a pop-culture title cadence around "${keyword}".`
+      tags: ["custom-keyword"],
+      reason: `Uses "${keywordProfile.original}" as a simple custom group identity.`
     },
     {
-      name: `${keywordLabel} Things`,
+      name: `${keywordProfile.label} End Zone`,
       mode: "clean",
-      tags: ["tv"],
-      reason: `Turns "${keyword}" into a TV-title style name.`
+      tags: ["football"],
+      reason: `Uses "${keywordProfile.original}" as a scoring-area football theme.`
     }
   ];
 
@@ -735,10 +774,10 @@ function referenceTemplatesForKeyword(keyword: string, mode: ContentMode): Gener
     .filter((template) => mode === "explicit" || template.mode === "clean")
     .map((template) => ({
       name: template.name,
-      source: keyword,
+      source: keywordProfile.original,
       mode: template.mode,
       reason: template.reason,
-      keyword
+      keyword: keywordProfile.label
     }));
 }
 
@@ -757,6 +796,38 @@ function resolveKeywordProfiles(keywords: string[]): KeywordProfile[] {
 
     seen.add(profile.id);
     return [profile];
+  });
+}
+
+function resolveCustomKeywordProfiles(
+  keywords: string[],
+  activeKeywordProfiles: KeywordProfile[]
+): CustomKeywordProfile[] {
+  const seen = new Set<string>();
+  const recognizedAliases = new Set(
+    activeKeywordProfiles.flatMap((profile) => profile.aliases.map((alias) => normalizeKeyword(alias)))
+  );
+
+  return keywords.flatMap((keyword) => {
+    const normalizedKeyword = normalizeKeyword(keyword);
+
+    if (
+      !normalizedKeyword ||
+      normalizedKeyword.length < MIN_CUSTOM_KEYWORD_LENGTH ||
+      ignoredCustomKeywords.has(normalizedKeyword) ||
+      recognizedAliases.has(normalizedKeyword) ||
+      seen.has(normalizedKeyword)
+    ) {
+      return [];
+    }
+
+    seen.add(normalizedKeyword);
+    return [
+      {
+        label: formatKeywordLabel(keyword),
+        original: keyword
+      }
+    ];
   });
 }
 

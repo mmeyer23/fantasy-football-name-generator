@@ -71,11 +71,26 @@ describe("generateNames", () => {
     expect(names).not.toContain("Lamb Fiction");
   });
 
-  it("adds fallback pop-culture keyword ideas for custom keywords", () => {
-    const names = generateNames([], ["PNW"], "clean").map((result) => result.name);
+  it("adds sensible theme containers for arbitrary custom keywords", () => {
+    const names = generateNames([], ["pizza"], "clean").map((result) => result.name);
 
-    expect(names).toContain("PNW League");
-    expect(names).toContain("Straight Outta PNW");
+    expect(names).toContain("Pizza League");
+    expect(names).toContain("Pizza Playbook");
+    expect(names).not.toContain("Pizza and Chill");
+    expect(names).not.toContain("Straight Outta Pizza");
+    expect(names).not.toContain("Pizza Things");
+  });
+
+  it("combines selected players with arbitrary custom keywords using safe theme formats", () => {
+    const ceedee = activePlayers.find((player) => player.id === "ceedee-lamb")!;
+
+    const results = generateNames([ceedee], ["pizza"], "clean");
+    const themedResult = results.find((result) => result.name === "Lamb's Pizza Club");
+
+    expect(themedResult).toMatchObject({
+      source: "CeeDee Lamb + Pizza",
+      keyword: "Pizza"
+    });
   });
 
   it("combines selected players with recognized keyword themes", () => {
