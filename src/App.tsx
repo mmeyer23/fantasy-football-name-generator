@@ -189,6 +189,7 @@ export function App() {
                     <p>{generatedName.reason}</p>
                     <span>
                       Source: {generatedName.source} · {generatedName.mode}
+                      {generatedName.keyword ? ` · Keyword: ${generatedName.keyword}` : ""}
                     </span>
                   </div>
                   <button

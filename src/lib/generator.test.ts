@@ -78,6 +78,26 @@ describe("generateNames", () => {
     expect(names).toContain("Straight Outta PNW");
   });
 
+  it("combines selected players with recognized keyword themes", () => {
+    const ceedee = activePlayers.find((player) => player.id === "ceedee-lamb")!;
+
+    const results = generateNames([ceedee], ["Marvel"], "clean");
+    const themedResult = results.find((result) => result.name === "Captain Lamb");
+
+    expect(themedResult).toMatchObject({
+      source: "CeeDee Lamb + Marvel",
+      keyword: "Marvel"
+    });
+  });
+
+  it("uses keyword aliases for theme-aware generation", () => {
+    const pitts = activePlayers.find((player) => player.id === "kyle-pitts")!;
+
+    const names = generateNames([pitts], ["niners"], "clean").map((result) => result.name);
+
+    expect(names).toContain("Gold Rush Pitts");
+  });
+
   it("caps generated names at 50", () => {
     const names = generateNames(activePlayers, ["Game of Thrones", "Marvel", "49ers", "PNW"], "explicit");
 

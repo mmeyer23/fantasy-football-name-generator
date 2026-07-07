@@ -7,6 +7,7 @@ export type GeneratedName = {
   source: string;
   mode: ContentMode;
   reason: string;
+  keyword?: string;
 };
 
 type Template = {
@@ -23,6 +24,18 @@ type ReferencePattern = {
   build: (player: Player) => string;
   appliesTo: (player: Player) => boolean;
   explain: (player: Player) => string;
+};
+
+type KeywordProfile = {
+  id: string;
+  label: string;
+  aliases: string[];
+  playerTemplates: Array<{
+    mode: ContentMode;
+    build: (player: Player) => string;
+    appliesTo?: (player: Player) => boolean;
+    reason: (player: Player, keyword: string) => string;
+  }>;
 };
 
 const MAX_GENERATED_NAMES = 50;
@@ -521,14 +534,106 @@ const referencePatterns: ReferencePattern[] = [
   }
 ];
 
+const keywordProfiles: KeywordProfile[] = [
+  {
+    id: "game-of-thrones",
+    label: "Game of Thrones",
+    aliases: ["game of thrones", "got", "house of the dragon", "dragon"],
+    playerTemplates: [
+      {
+        mode: "clean",
+        build: (player) => `House ${player.lastName}`,
+        reason: (player, keyword) => `Uses "${keyword}" as a fantasy-house theme around ${player.fullName}.`
+      },
+      {
+        mode: "clean",
+        build: (player) => `The ${player.lastName} Watch`,
+        reason: (player, keyword) => `Uses "${keyword}" to turn ${player.fullName} into a Night's Watch-style team name.`
+      }
+    ]
+  },
+  {
+    id: "marvel",
+    label: "Marvel",
+    aliases: ["marvel", "avengers", "superhero", "superheroes", "mcu"],
+    playerTemplates: [
+      {
+        mode: "clean",
+        build: (player) => `Captain ${player.lastName}`,
+        reason: (player, keyword) => `Uses "${keyword}" as a superhero-title theme around ${player.fullName}.`
+      },
+      {
+        mode: "clean",
+        build: (player) => `${player.firstName} Supreme`,
+        reason: (player, keyword) => `Uses "${keyword}" to give ${player.fullName} a comic-book title cadence.`
+      }
+    ]
+  },
+  {
+    id: "pnw",
+    label: "PNW",
+    aliases: ["pnw", "pacific northwest", "seattle", "portland", "rain", "evergreen"],
+    playerTemplates: [
+      {
+        mode: "clean",
+        build: (player) => `${player.lastName} Rainmakers`,
+        reason: (player, keyword) => `Uses "${keyword}" as a Pacific Northwest rain theme around ${player.fullName}.`
+      },
+      {
+        mode: "clean",
+        build: (player) => `Evergreen ${player.firstName}`,
+        reason: (player, keyword) => `Uses "${keyword}" as a regional evergreen theme around ${player.fullName}.`
+      }
+    ]
+  },
+  {
+    id: "49ers",
+    label: "49ers",
+    aliases: ["49ers", "niners", "san francisco", "sf", "gold rush"],
+    playerTemplates: [
+      {
+        mode: "clean",
+        build: (player) => `Gold Rush ${player.lastName}`,
+        reason: (player, keyword) => `Uses "${keyword}" as a 49ers gold-rush theme around ${player.fullName}.`
+      },
+      {
+        mode: "clean",
+        build: (player) => `${player.firstName} by the Bay`,
+        reason: (player, keyword) => `Uses "${keyword}" as a Bay Area football theme around ${player.fullName}.`
+      }
+    ]
+  },
+  {
+    id: "losers",
+    label: "Losers",
+    aliases: ["losers", "last place", "toilet bowl", "trash talk"],
+    playerTemplates: [
+      {
+        mode: "clean",
+        build: (player) => `${player.lastName} Last Picks`,
+        reason: (player, keyword) => `Uses "${keyword}" as a league-trash-talk theme around ${player.fullName}.`
+      },
+      {
+        mode: "clean",
+        build: (player) => `The ${player.firstName} L`,
+        reason: (player, keyword) => `Uses "${keyword}" as a short league-joke theme around ${player.fullName}.`
+      }
+    ]
+  }
+];
+
 export function generateNames(
   players: Player[],
   keywords: string[],
   mode: ContentMode
 ): GeneratedName[] {
+  const activeKeywordProfiles = resolveKeywordProfiles(keywords);
   const names = [
     ...players.flatMap((player) => templatesForPlayer(player, mode)),
     ...keywords.flatMap((keyword) => templatesForKeyword(keyword, mode)),
+    ...players.flatMap((player) =>
+      activeKeywordProfiles.flatMap((profile) => templatesForPlayerKeyword(player, profile, mode))
+    ),
     ...players.flatMap((player) => referenceTemplatesForPlayer(player, mode)),
     ...keywords.flatMap((keyword) => referenceTemplatesForKeyword(keyword, mode))
   ];
@@ -555,7 +660,21 @@ function templatesForKeyword(keyword: string, mode: ContentMode): GeneratedName[
       name: template.name,
       source: keyword,
       mode: template.mode,
-      reason: template.reason
+      reason: template.reason,
+      keyword
+    }));
+}
+
+function templatesForPlayerKeyword(player: Player, keywordProfile: KeywordProfile, mode: ContentMode): GeneratedName[] {
+  return keywordProfile.playerTemplates
+    .filter((template) => mode === "explicit" || template.mode === "clean")
+    .filter((template) => template.appliesTo?.(player) ?? true)
+    .map((template) => ({
+      name: template.build(player),
+      source: `${player.fullName} + ${keywordProfile.label}`,
+      mode: template.mode,
+      reason: template.reason(player, keywordProfile.label),
+      keyword: keywordProfile.label
     }));
 }
 
@@ -618,8 +737,27 @@ function referenceTemplatesForKeyword(keyword: string, mode: ContentMode): Gener
       name: template.name,
       source: keyword,
       mode: template.mode,
-      reason: template.reason
+      reason: template.reason,
+      keyword
     }));
+}
+
+function resolveKeywordProfiles(keywords: string[]): KeywordProfile[] {
+  const seen = new Set<string>();
+
+  return keywords.flatMap((keyword) => {
+    const normalizedKeyword = normalizeKeyword(keyword);
+    const profile = keywordProfiles.find((candidate) =>
+      candidate.aliases.some((alias) => normalizeKeyword(alias) === normalizedKeyword)
+    );
+
+    if (!profile || seen.has(profile.id)) {
+      return [];
+    }
+
+    seen.add(profile.id);
+    return [profile];
+  });
 }
 
 function normalizeKeyword(keyword: string): string {
