@@ -81,6 +81,18 @@ describe("generateNames", () => {
     expect(names).not.toContain("Pizza Things");
   });
 
+  it("uses player pun profiles for high-confidence soundalike names", () => {
+    const gibbs = activePlayers.find((player) => player.id === "jahmyr-gibbs")!;
+    const maye = activePlayers.find((player) => player.id === "drake-maye")!;
+    const mcconkey = activePlayers.find((player) => player.id === "ladd-mcconkey")!;
+
+    const names = generateNames([gibbs, maye, mcconkey], [], "clean").map((result) => result.name);
+
+    expect(names).toContain("Baby Back Gibbs");
+    expect(names).toContain("Mayehem");
+    expect(names).toContain("McConkey Kong");
+  });
+
   it("combines selected players with arbitrary custom keywords using safe theme formats", () => {
     const ceedee = activePlayers.find((player) => player.id === "ceedee-lamb")!;
 

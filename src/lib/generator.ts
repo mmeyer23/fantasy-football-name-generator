@@ -43,6 +43,12 @@ type CustomKeywordProfile = {
   original: string;
 };
 
+type PlayerPunProfile = {
+  soundalikes: string[];
+  hooks: string[];
+  templates: Template[];
+};
+
 const MAX_GENERATED_NAMES = 50;
 const MIN_CUSTOM_KEYWORD_LENGTH = 2;
 
@@ -305,6 +311,81 @@ const keywordTemplates: Record<string, Template[]> = {
       reason: "Uses an adult sitcom title as the setup for a football sack pun."
     }
   ]
+};
+
+const playerPunProfiles: Record<string, PlayerPunProfile> = {
+  "jahmyr-gibbs": {
+    soundalikes: ["ribs", "gives"],
+    hooks: ["Baby Back Ribs", "give and take"],
+    templates: [
+      {
+        name: "Baby Back Gibbs",
+        mode: "clean",
+        tags: ["food", "soundalike", "classic"],
+        reason: "Uses Gibbs as a ribs soundalike in the familiar baby back ribs phrase."
+      },
+      {
+        name: "Gibbs and Take",
+        mode: "clean",
+        tags: ["phrase", "soundalike"],
+        reason: "Uses Gibbs as a gives soundalike in the phrase give and take."
+      },
+      {
+        name: "Gibbs Me the Loot",
+        mode: "clean",
+        tags: ["song", "soundalike"],
+        reason: "Uses Gibbs as a gives soundalike in a recognizable song-title cadence."
+      }
+    ]
+  },
+  "drake-maye": {
+    soundalikes: ["may", "mayhem"],
+    hooks: ["mayhem", "come what may", "may the force be with you"],
+    templates: [
+      {
+        name: "Mayehem",
+        mode: "clean",
+        tags: ["soundalike", "wordplay"],
+        reason: "Uses Maye as the opening sound in mayhem."
+      },
+      {
+        name: "Come What Maye",
+        mode: "clean",
+        tags: ["phrase", "soundalike"],
+        reason: "Uses Maye as a direct may soundalike in a familiar phrase."
+      },
+      {
+        name: "Maye the Force Be With You",
+        mode: "clean",
+        tags: ["movie", "soundalike"],
+        reason: "Uses Maye as a may soundalike in a recognizable movie quote."
+      }
+    ]
+  },
+  "ladd-mcconkey": {
+    soundalikes: ["monkey", "donkey"],
+    hooks: ["Donkey Kong", "monkey business"],
+    templates: [
+      {
+        name: "McConkey Kong",
+        mode: "clean",
+        tags: ["game", "soundalike"],
+        reason: "Uses McConkey as a monkey soundalike in the Donkey Kong reference."
+      },
+      {
+        name: "McConkey Business",
+        mode: "clean",
+        tags: ["phrase", "soundalike"],
+        reason: "Uses McConkey as a monkey soundalike in the phrase monkey business."
+      },
+      {
+        name: "No McConkeying Around",
+        mode: "clean",
+        tags: ["phrase", "soundalike"],
+        reason: "Uses McConkey as a monkey soundalike in a common phrase."
+      }
+    ]
+  }
 };
 
 const referencePatterns: ReferencePattern[] = [
@@ -638,6 +719,7 @@ export function generateNames(
   const activeKeywordProfiles = resolveKeywordProfiles(keywords);
   const customKeywordProfiles = resolveCustomKeywordProfiles(keywords, activeKeywordProfiles);
   const names = [
+    ...players.flatMap((player) => templatesForPlayerPunProfile(player, mode)),
     ...players.flatMap((player) => templatesForPlayer(player, mode)),
     ...keywords.flatMap((keyword) => templatesForKeyword(keyword, mode)),
     ...players.flatMap((player) =>
@@ -718,6 +800,23 @@ function templatesForCustomPlayerKeyword(
       mode: template.mode,
       reason: template.reason,
       keyword: keywordProfile.label
+    }));
+}
+
+function templatesForPlayerPunProfile(player: Player, mode: ContentMode): GeneratedName[] {
+  const profile = playerPunProfiles[player.id];
+
+  if (!profile) {
+    return [];
+  }
+
+  return profile.templates
+    .filter((template) => mode === "explicit" || template.mode === "clean")
+    .map((template) => ({
+      name: template.name,
+      source: player.fullName,
+      mode: template.mode,
+      reason: `${template.reason} Sound hooks: ${profile.soundalikes.join(", ")}.`
     }));
 }
 
