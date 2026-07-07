@@ -582,6 +582,158 @@ const referencePhrases: ReferencePhrase[] = [
     build: (atom) => `${atom.replacement} Mustard`,
     explain: (player, atom) =>
       `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "dijon")} soundalike in a food phrase.`
+  },
+  {
+    category: "movie",
+    source: "Love Actually",
+    mode: "clean",
+    targetSound: "love",
+    build: (atom) => `${atom.replacement} Actually`,
+    explain: (player, atom) => `Uses ${atom.replacement} from ${player.fullName} in a direct movie-title reference.`
+  },
+  {
+    category: "song",
+    source: "All You Need Is Love",
+    mode: "clean",
+    targetSound: "love",
+    build: (atom) => `All You Need Is ${atom.replacement}`,
+    explain: (player, atom) => `Uses ${atom.replacement} from ${player.fullName} in a direct song-title reference.`
+  },
+  {
+    category: "tv",
+    source: "Too Many Cooks",
+    mode: "clean",
+    targetSound: "cook",
+    build: (atom) => `Too Many ${pluralizeAtom(atom)}`,
+    explain: (player, atom) => `Uses ${atom.replacement} from ${player.fullName} in a direct TV-reference phrase.`
+  },
+  {
+    category: "song",
+    source: "London Calling",
+    mode: "clean",
+    targetSound: "london",
+    build: (atom) => `${atom.replacement} Calling`,
+    explain: (player, atom) => `Uses ${atom.replacement} from ${player.fullName} in a direct song-title reference.`
+  },
+  {
+    category: "slogan",
+    source: "We're not worthy",
+    mode: "clean",
+    targetSound: "worthy",
+    build: (atom) => `We're Not ${atom.replacement}`,
+    explain: (player, atom) => `Uses ${atom.replacement} from ${player.fullName} in a familiar pop-culture slogan.`
+  },
+  {
+    category: "brand",
+    source: "Rice Krispies",
+    mode: "clean",
+    targetSound: "rice",
+    build: (atom) => `${atom.replacement} Krispies`,
+    explain: (player, atom) => `Uses ${atom.replacement} from ${player.fullName} in a direct cereal-brand reference.`
+  },
+  {
+    category: "song",
+    source: "Brown Eyed Girl",
+    mode: "clean",
+    targetSound: "brown",
+    build: (atom) => `${atom.replacement} Eyed Squad`,
+    explain: (player, atom) => `Uses ${atom.replacement} from ${player.fullName} in a recognizable song-title cadence.`
+  },
+  {
+    category: "song",
+    source: "Flowers",
+    mode: "clean",
+    targetSound: "flowers",
+    build: (atom) => `I Can Buy Myself ${atom.replacement}`,
+    explain: (player, atom) => `Uses ${atom.replacement} from ${player.fullName} in a direct song-title reference.`
+  },
+  {
+    category: "brand",
+    source: "Chase Bank",
+    mode: "clean",
+    targetSound: "chase",
+    build: (atom) => `${atom.replacement} Bank`,
+    explain: (player, atom) => `Uses ${atom.replacement} from ${player.fullName} in a direct brand-name reference.`
+  },
+  {
+    category: "slogan",
+    source: "Cut to the chase",
+    mode: "clean",
+    targetSound: "chase",
+    build: (atom) => `Cut to the ${atom.replacement}`,
+    explain: (player, atom) => `Uses ${atom.replacement} from ${player.fullName} in a familiar phrase.`
+  },
+  {
+    category: "movie",
+    source: "The Fast and the Furious",
+    mode: "clean",
+    targetSound: "swift",
+    build: (atom) => `The Fast and the ${atom.replacement}`,
+    explain: (player, atom) => `Uses ${atom.replacement} from ${player.fullName} because swift means fast.`
+  },
+  {
+    category: "music",
+    source: "Taylor Swift",
+    mode: "clean",
+    targetSound: "swift",
+    build: (atom) => `Taylor ${atom.replacement}`,
+    explain: (player, atom) => `Uses ${atom.replacement} from ${player.fullName} in a direct music-celebrity reference.`
+  },
+  {
+    category: "slogan",
+    source: "Hall of Fame",
+    mode: "clean",
+    targetSound: "hall",
+    build: (atom) => `${atom.replacement} of Fame`,
+    explain: (player, atom) => `Uses ${atom.replacement} from ${player.fullName} in a direct achievement phrase.`
+  },
+  {
+    category: "food",
+    source: "Baker's dozen",
+    mode: "clean",
+    targetSound: "baker",
+    build: (atom) => `${atom.replacement}'s Dozen`,
+    explain: (player, atom) => `Uses ${atom.replacement} from ${player.fullName} in a direct food phrase.`
+  },
+  {
+    category: "anime",
+    source: "Hunter x Hunter",
+    mode: "clean",
+    targetSound: "hunter",
+    build: (atom) => `${atom.replacement} x ${atom.replacement}`,
+    explain: (player, atom) => `Uses ${atom.replacement} from ${player.fullName} in a direct anime-title reference.`
+  },
+  {
+    category: "slogan",
+    source: "Pickens and grinnin",
+    mode: "clean",
+    targetSound: "pickens",
+    build: (atom) => `${atom.replacement} and Grinnin'`,
+    explain: (player, atom) => `Uses ${atom.replacement} from ${player.fullName} in a familiar music phrase.`
+  },
+  {
+    category: "slogan",
+    source: "Mark my words",
+    mode: "clean",
+    targetSound: "mark",
+    build: (atom) => `${atom.replacement} My Words`,
+    explain: (player, atom) => `Uses ${atom.replacement} from ${player.fullName} in a familiar phrase.`
+  },
+  {
+    category: "slogan",
+    source: "Meet Joe Black",
+    mode: "clean",
+    targetSound: "joe",
+    build: (atom) => `Meet ${atom.replacement} Stack`,
+    explain: (player, atom) => `Uses ${atom.replacement} from ${player.fullName} in a movie-title cadence with a football finish.`
+  },
+  {
+    category: "slogan",
+    source: "What can Brown do for you",
+    mode: "clean",
+    targetSound: "brown",
+    build: (atom) => `What Can ${atom.replacement} Do for You?`,
+    explain: (player, atom) => `Uses ${atom.replacement} from ${player.fullName} in a familiar brand-slogan cadence.`
   }
 ];
 
@@ -1212,6 +1364,10 @@ function atomMatchesReferencePhrase(atom: PlayerPunAtom, phrase: ReferencePhrase
 
 function targetSoundLabel(atom: PlayerPunAtom, targetSound: string): string {
   return atom.soundsLike.find((sound) => normalizeKeyword(sound) === normalizeKeyword(targetSound)) ?? targetSound;
+}
+
+function pluralizeAtom(atom: PlayerPunAtom): string {
+  return atom.replacement.endsWith("s") ? atom.replacement : `${atom.replacement}s`;
 }
 
 export function isAllowedForMode(generatedName: GeneratedName, mode: ContentMode): boolean {

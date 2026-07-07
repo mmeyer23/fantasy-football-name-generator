@@ -132,6 +132,42 @@ describe("generateNames", () => {
     expect(names).toContain("Bed, Bath, and Bijan");
   });
 
+  it("uses shared reference phrases for players without custom pun profiles", () => {
+    const players = [
+      "jordan-love",
+      "james-cook",
+      "zay-flowers",
+      "drake-london",
+      "xavier-worthy",
+      "rashee-rice",
+      "a-j-brown",
+      "ja-marr-chase",
+      "d-andre-swift",
+      "breece-hall",
+      "baker-mayfield",
+      "travis-hunter"
+    ].map((id) => activePlayers.find((player) => player.id === id)!);
+
+    const names = generateNames(players, [], "clean").map((result) => result.name);
+
+    expect(names).toEqual(
+      expect.arrayContaining([
+        "Love Actually",
+        "Too Many Cooks",
+        "I Can Buy Myself Flowers",
+        "London Calling",
+        "We're Not Worthy",
+        "Rice Krispies",
+        "Brown Eyed Squad",
+        "Cut to the Chase",
+        "Taylor Swift",
+        "Hall of Fame",
+        "Baker's Dozen",
+        "Hunter x Hunter"
+      ])
+    );
+  });
+
   it("combines selected players with arbitrary custom keywords using safe theme formats", () => {
     const ceedee = activePlayers.find((player) => player.id === "ceedee-lamb")!;
 
