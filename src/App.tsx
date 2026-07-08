@@ -32,6 +32,7 @@ export function App() {
     () => generateNames(selectedPlayers, keywords, contentMode),
     [contentMode, keywords, selectedPlayers]
   );
+  const validatedPunCount = generatedNames.filter((generatedName) => generatedName.isValidatedPun).length;
 
   function addPlayer(player: Player) {
     if (selectedPlayers.some((selectedPlayer) => selectedPlayer.id === player.id)) {
@@ -176,7 +177,7 @@ export function App() {
             <div className="panel-heading">
               <h2>Name Ideas</h2>
               <div className="results-summary">
-                <span>{generatedNames.length} ideas</span>
+                <span>{validatedPunCount} validated puns</span>
                 <Sparkles size={20} aria-hidden="true" />
               </div>
             </div>

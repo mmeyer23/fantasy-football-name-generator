@@ -1,0 +1,30 @@
+[
+  {
+    "text": "Kelsey Grammer",
+    "category": "celebrity",
+    "source": "curated seed",
+    "popularityScore": 88,
+    "mode": "clean",
+    "targets": [
+      {
+        "replacedWord": "Kelsey",
+        "targetSound": "kelsey",
+        "template": "{atom} Grammar"
+      }
+    ]
+  },
+  {
+    "text": "Nothing Else Matters",
+    "category": "song",
+    "source": "curated seed",
+    "popularityScore": 92,
+    "mode": "clean",
+    "targets": [
+      {
+        "replacedWord": "Else",
+        "targetSound": "else",
+        "template": "Nothing {atom} Matters"
+      }
+    ]
+  }
+]

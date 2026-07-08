@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { activePlayers } from "../data/players";
-import { generateNames, isAllowedForMode, isCleanSafeName } from "./generator";
+import {
+  generateNames,
+  getPlayerPunAtoms,
+  isAllowedForMode,
+  isCleanSafeName,
+  matchPlayerAtomToTarget,
+  type PlayerPunAtom
+} from "./generator";
 
 describe("generateNames", () => {
   it("filters explicit names out of clean mode", () => {
@@ -58,8 +65,8 @@ describe("generateNames", () => {
 
     expect(names.length).toBeGreaterThanOrEqual(25);
     expect(names.length).toBeLessThanOrEqual(50);
-    expect(nameText).toContain("The Lamb King");
-    expect(nameText).toContain("Pitts and Giggles");
+    expect(nameText).toContain("Silence of the Lamb");
+    expect(nameText).toContain("Pitts Creek");
   });
 
   it("rejects weak movie substitutions that do not make a real pun", () => {
@@ -79,6 +86,321 @@ describe("generateNames", () => {
     expect(names).not.toContain("Pizza and Chill");
     expect(names).not.toContain("Straight Outta Pizza");
     expect(names).not.toContain("Pizza Things");
+  });
+
+  it("uses player pun profiles for high-confidence soundalike names", () => {
+    const gibbs = activePlayers.find((player) => player.id === "jahmyr-gibbs")!;
+    const maye = activePlayers.find((player) => player.id === "drake-maye")!;
+    const mcconkey = activePlayers.find((player) => player.id === "ladd-mcconkey")!;
+
+    const names = generateNames([gibbs, maye, mcconkey], [], "clean").map((result) => result.name);
+
+    expect(names).toContain("Baby Back Gibbs");
+    expect(names).toContain("Mayehem");
+    expect(names).toContain("McConkey Kong");
+    expect(names).toContain("Pin the Tail on the McConkey");
+    expect(names).toContain("McConkey Kong Country");
+    expect(names).toContain("McConkey Tonk Blues");
+    expect(names).toContain("Laddiator");
+  });
+
+  it("creates first-name and last-name pun atoms for every active player", () => {
+    for (const player of activePlayers) {
+      const atoms = getPlayerPunAtoms(player);
+
+      expect(atoms).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ part: "first", replacement: player.firstName }),
+          expect.objectContaining({ part: "last", replacement: player.lastName })
+        ])
+      );
+    }
+  });
+
+  it("adds curated Ladd McConkey atoms for reference-phrase matching", () => {
+    const mcconkey = activePlayers.find((player) => player.id === "ladd-mcconkey")!;
+    const atoms = getPlayerPunAtoms(mcconkey);
+    const sounds = atoms.flatMap((atom) => atom.soundsLike);
+    const hooks = atoms.flatMap((atom) => atom.phraseHooks);
+
+    expect(sounds).toEqual(expect.arrayContaining(["lad", "gladiator", "monkey", "donkey", "honky", "key"]));
+    expect(hooks).toEqual(
+      expect.arrayContaining(["Pin the Tail on the Donkey", "Donkey Kong Country", "Honky Tonk Blues", "Gladiator"])
+    );
+  });
+
+  it("generates names from reference phrases matched to player pun atoms", () => {
+    const mccaffrey = activePlayers.find((player) => player.id === "christian-mccaffrey")!;
+    const bijan = activePlayers.find((player) => player.id === "bijan-robinson")!;
+
+    const names = generateNames([mccaffrey, bijan], [], "clean").map((result) => result.name);
+
+    expect(names).toContain("I Think I Pulled McCaff");
+    expect(names).toContain("Bed, Bath, and Bijan");
+  });
+
+  it("uses soundalike and association atoms instead of hard-coded final names", () => {
+    const players = [
+      "breece-hall",
+      "ceedee-lamb",
+      "jahmyr-gibbs",
+      "justin-jefferson",
+      "kyren-williams"
+    ].map((id) => activePlayers.find((player) => player.id === id)!);
+
+    const names = generateNames(players, [], "clean").map((result) => result.name);
+
+    expect(names).toEqual(
+      expect.arrayContaining([
+        "Breece's Pieces",
+        "CeeDeeCee Guidelines",
+        "The Man in the Jahmyrror",
+        "We Built This Griddy",
+        "For Kyren Out Loud"
+      ])
+    );
+  });
+
+  it("generates a deep set from phrase families for a single player", () => {
+    const breece = activePlayers.find((player) => player.id === "breece-hall")!;
+
+    const names = generateNames([breece], [], "clean").map((result) => result.name);
+
+    expect(names.length).toBeGreaterThanOrEqual(18);
+    expect(names).toEqual(
+      expect.arrayContaining([
+        "Breece's Pieces",
+        "Breece's Cups",
+        "Breece Lightning",
+        "Breece Is the Word",
+        "Easy Breecey",
+        "Breece Mode",
+        "Breece Hall of Fame",
+        "Breece Hall Pass",
+        "Breece Hall Monitor",
+        "Hall or Nothing",
+        "Against Hall Odds",
+        "Hall the Small Things"
+      ])
+    );
+  });
+
+  it("generates a deep Achane set from reusable sound families", () => {
+    const achane = activePlayers.find((player) => player.id === "de-von-achane")!;
+
+    const names = generateNames([achane], [], "clean").map((result) => result.name);
+
+    expect(names.length).toBeGreaterThanOrEqual(12);
+    expect(names).toEqual(
+      expect.arrayContaining([
+        "Achane in the Membrane",
+        "Crazy Rich Achanes",
+        "Achane Reaction",
+        "Django Achaned",
+        "De'Von Intervention",
+        "Alice in Achanes",
+        "Achane Has Left the Station",
+        "Rage Against the Achane"
+      ])
+    );
+  });
+
+  it("keeps high-confidence phrase-family coverage across covered fantasy stars", () => {
+    const coveredStarIds = [
+      "amon-ra-st-brown",
+      "breece-hall",
+      "bijan-robinson",
+      "ceedee-lamb",
+      "christian-mccaffrey",
+      "de-von-achane",
+      "james-cook",
+      "jahmyr-gibbs",
+      "justin-jefferson",
+      "kyren-williams",
+      "ladd-mcconkey",
+      "malik-nabers",
+      "puka-nacua",
+      "saquon-barkley",
+      "derrick-henry",
+      "travis-kelce",
+      "tyreek-hill"
+    ];
+
+    const underCoveredPlayers = coveredStarIds.flatMap((playerId) => {
+      const player = activePlayers.find((candidate) => candidate.id === playerId)!;
+      const names = generateNames([player], [], "clean");
+
+      return names.length >= 8 ? [] : [`${player.fullName}: ${names.length}`];
+    });
+
+    expect(underCoveredPlayers).toEqual([]);
+  });
+
+  it("generates supplemental ideas without disconnected phrase substitutions", () => {
+    const kelce = activePlayers.find((player) => player.id === "travis-kelce")!;
+    const henry = activePlayers.find((player) => player.id === "derrick-henry")!;
+
+    const kelceNames = generateNames([kelce], [], "clean").map((result) => result.name);
+    const henryNames = generateNames([henry], [], "clean").map((result) => result.name);
+
+    expect(kelceNames.length).toBeGreaterThanOrEqual(8);
+    expect(henryNames.length).toBeGreaterThanOrEqual(18);
+    expect(kelceNames).toEqual(
+      expect.arrayContaining(["Kelce Grammar", "Nothing Kelce Matters", "Kelce Dagger", "No One Kelce"])
+    );
+    expect(kelceNames).not.toEqual(
+      expect.arrayContaining([
+        "Travis's Anatomy",
+        "Travis Got Back",
+        "The Kelce Supremacy",
+        "Kelce Kingdom",
+        "Kelce Mismatch",
+        "TK Takeover"
+      ])
+    );
+    expect(henryNames).toEqual(
+      expect.arrayContaining([
+        "One Derricktion",
+        "Go Derrickly to Jail",
+        "I Would Do Henrything for Love",
+        "King Henry's Court",
+        "Fox in the Henryhouse",
+        "Henry Danger"
+      ])
+    );
+  });
+
+  it("uses phrase-shaped generated ideas for the majority of top recommendations", () => {
+    const henry = activePlayers.find((player) => player.id === "derrick-henry")!;
+
+    const topNames = generateNames([henry], [], "clean").slice(0, 25);
+    const phraseLikeCount = topNames.filter(
+      (result) => result.reason.includes("phrase") || result.reason.includes("song") || result.reason.includes("TV")
+    ).length;
+
+    expect(phraseLikeCount).toBeGreaterThanOrEqual(12);
+  });
+
+  it("matches player atoms only when the sound relationship is defensible", () => {
+    const atom = (replacement: string, soundsLike: string[]): PlayerPunAtom => ({
+      part: "last",
+      replacement,
+      soundsLike,
+      phraseHooks: []
+    });
+
+    expect(matchPlayerAtomToTarget(atom("Breece", ["reese"]), "Reese")).toMatchObject({ matchKind: "soundalike" });
+    expect(matchPlayerAtomToTarget(atom("Achane", ["chain"]), "chain")).toMatchObject({ matchKind: "soundalike" });
+    expect(matchPlayerAtomToTarget(atom("Gibbs", ["ribs"]), "ribs")).toMatchObject({ matchKind: "soundalike" });
+    expect(matchPlayerAtomToTarget(atom("McConkey", ["monkey"]), "monkey")).toMatchObject({
+      matchKind: "soundalike"
+    });
+
+    expect(matchPlayerAtomToTarget(atom("Travis", ["travis"]), "Grey")).toBeUndefined();
+    expect(matchPlayerAtomToTarget(atom("Travis", ["travis"]), "Baby")).toBeUndefined();
+    expect(matchPlayerAtomToTarget(atom("Kelce", ["kelce"]), "Bourne")).toBeUndefined();
+  });
+
+  it("adds validation metadata to every player-only generated name", () => {
+    const representativePlayers = [
+      "breece-hall",
+      "de-von-achane",
+      "derrick-henry",
+      "ceedee-lamb",
+      "jahmyr-gibbs",
+      "ladd-mcconkey",
+      "travis-kelce",
+      "christian-mccaffrey",
+      "bijan-robinson"
+    ].map((id) => activePlayers.find((player) => player.id === id)!);
+
+    const invalidResults = representativePlayers.flatMap((player) =>
+      generateNames([player], [], "clean").flatMap((result) =>
+        result.isValidatedPun &&
+        result.referencePhrase &&
+        result.replacedWord &&
+        result.playerAtom &&
+        result.matchKind &&
+        typeof result.score === "number"
+          ? []
+          : [`${player.fullName}: ${result.name}`]
+      )
+    );
+
+    expect(invalidResults).toEqual([]);
+  });
+
+  it("does not count generic fallback names toward representative player coverage", () => {
+    const representativePlayers = [
+      "breece-hall",
+      "de-von-achane",
+      "derrick-henry",
+      "ceedee-lamb",
+      "jahmyr-gibbs",
+      "ladd-mcconkey",
+      "travis-kelce",
+      "christian-mccaffrey",
+      "bijan-robinson"
+    ].map((id) => activePlayers.find((player) => player.id === id)!);
+
+    const underCoveredPlayers = representativePlayers.flatMap((player) => {
+      const validatedPuns = generateNames([player], [], "clean").filter((result) => result.isValidatedPun);
+      const genericFallbacks = validatedPuns.filter((result) => result.sourceType === "fallback");
+
+      return validatedPuns.length >= 20 && genericFallbacks.length === 0
+        ? []
+        : [`${player.fullName}: ${validatedPuns.length} validated, ${genericFallbacks.length} fallback`];
+    });
+
+    expect(underCoveredPlayers).toEqual([]);
+  });
+
+  it("does not add broad waiver-wire filler to every skill player", () => {
+    const breece = activePlayers.find((player) => player.id === "breece-hall")!;
+    const ceedee = activePlayers.find((player) => player.id === "ceedee-lamb")!;
+
+    const names = generateNames([breece, ceedee], [], "clean").map((result) => result.name);
+
+    expect(names).not.toContain("Hall on the Waiver Wire");
+    expect(names).not.toContain("Lamb on the Waiver Wire");
+    expect(names).not.toContain("Breece Zone");
+    expect(names).not.toContain("CeeDee's Route 66");
+  });
+
+  it("uses shared reference phrases for players without custom pun profiles", () => {
+    const players = [
+      "jordan-love",
+      "james-cook",
+      "zay-flowers",
+      "drake-london",
+      "xavier-worthy",
+      "rashee-rice",
+      "a-j-brown",
+      "ja-marr-chase",
+      "d-andre-swift",
+      "breece-hall",
+      "baker-mayfield",
+      "travis-hunter"
+    ].map((id) => activePlayers.find((player) => player.id === id)!);
+
+    const names = generateNames(players, [], "clean").map((result) => result.name);
+
+    expect(names).toEqual(
+      expect.arrayContaining([
+        "Love Actually",
+        "Too Many Cooks",
+        "I Can Buy Myself Flowers",
+        "London Calling",
+        "We're Not Worthy",
+        "Rice Krispies",
+        "Brown Eyed Squad",
+        "Cut to the Chase",
+        "Taylor Swift",
+        "Hall of Fame",
+        "Baker's Dozen",
+        "Hunter x Hunter"
+      ])
+    );
   });
 
   it("combines selected players with arbitrary custom keywords using safe theme formats", () => {
