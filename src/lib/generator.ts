@@ -455,6 +455,18 @@ const playerPunProfiles: Record<string, PlayerPunProfile> = {
   "derrick-henry": {
     atoms: [
       {
+        part: "first",
+        replacement: "Derrick",
+        soundsLike: ["direction", "direct", "directly"],
+        phraseHooks: ["One Direction", "go directly to jail"]
+      },
+      {
+        part: "last",
+        replacement: "Henry",
+        soundsLike: ["anything", "hen", "henhouse", "henry"],
+        phraseHooks: ["I Would Do Anything for Love", "fox in the henhouse", "Henry Danger"]
+      },
+      {
         part: "alias",
         replacement: "King Henry",
         soundsLike: ["king", "henry"],
@@ -785,6 +797,76 @@ const referencePhrases: ReferencePhrase[] = [
       {
         source: "Coffee run",
         build: (atom) => `${atom.replacement} Coffee Run`
+      }
+    ]
+  },
+  {
+    category: "music",
+    source: "One Direction",
+    mode: "clean",
+    targetSound: "direction",
+    build: (atom) => `One ${atom.replacement}tion`,
+    explain: (player, atom) =>
+      `Uses ${atom.replacement} from ${player.fullName} as the opening sound in a One Direction-style phrase.`,
+    variants: [
+      {
+        source: "Wrong direction",
+        build: (atom) => `Wrong ${atom.replacement}tion`
+      },
+      {
+        source: "Final direction",
+        build: (atom) => `Final ${atom.replacement}tion`
+      }
+    ]
+  },
+  {
+    category: "game",
+    source: "Go directly to jail",
+    mode: "clean",
+    targetSound: "directly",
+    build: (atom) => `Go ${atom.replacement}ly to Jail`,
+    explain: (player, atom) =>
+      `Uses ${atom.replacement} from ${player.fullName} as the opening sound in a familiar board-game instruction.`
+  },
+  {
+    category: "song",
+    source: "I Would Do Anything for Love",
+    mode: "clean",
+    targetSound: "anything",
+    build: (atom) => `I Would Do ${atom.replacement}thing for Love`,
+    explain: (player, atom) =>
+      `Uses ${atom.replacement} from ${player.fullName} as the opening sound in a song-title phrase.`,
+    variants: [
+      {
+        source: "Anything goes",
+        build: (atom) => `${atom.replacement}thing Goes`
+      }
+    ]
+  },
+  {
+    category: "phrase",
+    source: "Fox in the henhouse",
+    mode: "clean",
+    targetSound: "henhouse",
+    build: (atom) => `Fox in the ${atom.replacement}house`,
+    explain: (player, atom) =>
+      `Uses ${atom.replacement} from ${player.fullName} as the opening sound in a familiar henhouse phrase.`
+  },
+  {
+    category: "tv",
+    source: "Henry Danger",
+    mode: "clean",
+    targetSound: "henry",
+    build: (atom) => `${atom.replacement} Danger`,
+    explain: (player, atom) => `Uses ${atom.replacement} from ${player.fullName} in a direct TV-title reference.`,
+    variants: [
+      {
+        source: "King Henry's Court",
+        build: (atom) => `${possessiveAtom(atom)} Court`
+      },
+      {
+        source: "Henry VIII",
+        build: (atom) => `${atom.replacement} VIII`
       }
     ]
   },
@@ -2085,58 +2167,77 @@ function generatedIdeaTemplatesForPlayer(player: Player, mode: ContentMode): Gen
     return [];
   }
 
+  const ideas: GeneratedName[] = [...cleverPhraseFrameIdeasForPlayer(player)];
   const initials = playerInitials(player);
   const lastInitial = normalizeKeyword(player.lastName).charAt(0);
   const alliterativeWords = alliterativeIdeaWords[lastInitial] ?? ["Dynasty", "Express", "Takeover", "Society"];
   const positionWords = positionIdeaWords[player.position];
   const primaryAlias = player.aliases?.[0];
-  const ideas: GeneratedName[] = [];
 
-  for (const word of alliterativeWords) {
+  for (const word of alliterativeWords.slice(0, 2)) {
     ideas.push(generatedIdea(player, `${player.lastName} ${word}`, "alliterative last-name generator"));
   }
 
-  for (const word of positionWords) {
+  for (const word of positionWords.slice(0, 2)) {
     ideas.push(generatedIdea(player, `${player.lastName} ${word}`, `${player.position} role generator`));
-  }
-
-  for (const word of alliterativeWords.slice(0, 2)) {
-    ideas.push(generatedIdea(player, `${player.firstName}'s ${word}`, "first-name ownership generator"));
-  }
-
-  for (const word of positionWords.slice(0, 3)) {
-    ideas.push(generatedIdea(player, `${player.firstName}'s ${word}`, `${player.position} role ownership generator`));
   }
 
   ideas.push(
     generatedIdea(player, `${initials} Takeover`, "initials generator"),
-    generatedIdea(player, `${initials} Unlimited`, "initials generator"),
-    generatedIdea(player, `${initials} After Dark`, "initials generator"),
-    generatedIdea(player, `${initials} Highlight Reel`, "initials generator"),
-    generatedIdea(player, `${player.lastName} & Order`, "name-plus-pop-culture cadence generator"),
-    generatedIdea(player, `${player.lastName} Department`, "name-as-organization generator"),
-    generatedIdea(player, `${player.lastName} Incorporated`, "name-as-organization generator"),
-    generatedIdea(player, `${player.firstName} the ${player.position}`, "player-role title generator"),
-    generatedIdea(player, `${player.fullName} Experience`, "full-name event generator")
+    generatedIdea(player, `${initials} After Dark`, "initials generator")
   );
 
   if (primaryAlias) {
     ideas.push(
-      generatedIdea(player, `${primaryAlias} Takeover`, "alias generator"),
-      generatedIdea(player, `${primaryAlias} Mode`, "alias generator"),
-      generatedIdea(player, `${primaryAlias} Express`, "alias generator")
-    );
-  }
-
-  if (player.lastName.length >= 5) {
-    ideas.push(
-      generatedIdea(player, `${player.lastName} Season`, "last-name event generator"),
-      generatedIdea(player, `${player.lastName} Agenda`, "last-name event generator"),
-      generatedIdea(player, `${player.lastName} Coalition`, "last-name event generator")
+      generatedIdea(player, `${primaryAlias} Mode`, "alias generator")
     );
   }
 
   return ideas;
+}
+
+function cleverPhraseFrameIdeasForPlayer(player: Player): GeneratedName[] {
+  const { firstName, lastName, fullName } = player;
+  const names = [
+    `${firstName} Things First`,
+    `${firstName} and the Giant Peach`,
+    `Everybody Loves ${firstName}`,
+    `There's Something About ${firstName}`,
+    `${firstName} Night Lights`,
+    `${firstName} in the Middle`,
+    `${firstName}'s Anatomy`,
+    `${firstName} Got Back`,
+    `${lastName} Actually`,
+    `${lastName} Impossible`,
+    `The ${lastName} Ultimatum`,
+    `The ${lastName} Supremacy`,
+    `The ${lastName} Identity`,
+    `${lastName} of Dreams`,
+    `House of ${lastName}`,
+    `How I Met Your ${lastName}`,
+    `Saving Private ${lastName}`,
+    `${lastName} at Tiffany's`,
+    `${lastName} & Order`,
+    `${lastName} Club`,
+    `${lastName} Story`,
+    `Return of the ${lastName}`,
+    `The ${lastName} Knight`,
+    `${lastName} Hard`,
+    `${lastName} Harder`,
+    `The ${lastName} Games`,
+    `${lastName} Almighty`,
+    `${lastName} Royale`,
+    `${lastName} on the Roof`,
+    `The ${lastName} Show`,
+    `Full Metal ${lastName}`,
+    `${lastName} Wars`,
+    `${lastName} Trek`,
+    `${lastName} Runner`,
+    `${lastName} Island`,
+    `${fullName} Experience`
+  ];
+
+  return names.map((name) => generatedIdea(player, name, "clever phrase-frame generator"));
 }
 
 function generatedIdea(player: Player, name: string, reason: string): GeneratedName {

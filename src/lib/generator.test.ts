@@ -239,11 +239,29 @@ describe("generateNames", () => {
     expect(kelceNames.length).toBeGreaterThanOrEqual(24);
     expect(henryNames.length).toBeGreaterThanOrEqual(24);
     expect(kelceNames).toEqual(
-      expect.arrayContaining(["Kelce Kingdom", "Kelce Mismatch", "TK Takeover", "Travis's Seam Team"])
+      expect.arrayContaining(["Kelce Kingdom", "Kelce Mismatch", "TK Takeover", "The Kelce Supremacy"])
     );
     expect(henryNames).toEqual(
-      expect.arrayContaining(["Henry Havoc", "Henry Ground Game", "DH Takeover", "King Henry Mode"])
+      expect.arrayContaining([
+        "One Derricktion",
+        "Go Derrickly to Jail",
+        "I Would Do Henrything for Love",
+        "King Henry's Court",
+        "Fox in the Henryhouse",
+        "Henry Danger"
+      ])
     );
+  });
+
+  it("uses phrase-shaped generated ideas for the majority of top recommendations", () => {
+    const henry = activePlayers.find((player) => player.id === "derrick-henry")!;
+
+    const topNames = generateNames([henry], [], "clean").slice(0, 25);
+    const phraseLikeCount = topNames.filter(
+      (result) => result.reason.includes("phrase") || result.reason.includes("song") || result.reason.includes("TV")
+    ).length;
+
+    expect(phraseLikeCount).toBeGreaterThanOrEqual(16);
   });
 
   it("does not add broad waiver-wire filler to every skill player", () => {
