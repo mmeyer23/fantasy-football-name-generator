@@ -178,6 +178,55 @@ describe("generateNames", () => {
     );
   });
 
+  it("generates a deep Achane set from reusable sound families", () => {
+    const achane = activePlayers.find((player) => player.id === "de-von-achane")!;
+
+    const names = generateNames([achane], [], "clean").map((result) => result.name);
+
+    expect(names.length).toBeGreaterThanOrEqual(12);
+    expect(names).toEqual(
+      expect.arrayContaining([
+        "Achane in the Membrane",
+        "Crazy Rich Achanes",
+        "Achane Reaction",
+        "Django Achaned",
+        "De'Von Intervention",
+        "Alice in Achanes",
+        "Achane Has Left the Station",
+        "Rage Against the Achane"
+      ])
+    );
+  });
+
+  it("keeps rich phrase-family coverage across covered fantasy stars", () => {
+    const coveredStarIds = [
+      "amon-ra-st-brown",
+      "breece-hall",
+      "bijan-robinson",
+      "ceedee-lamb",
+      "christian-mccaffrey",
+      "de-von-achane",
+      "james-cook",
+      "jahmyr-gibbs",
+      "justin-jefferson",
+      "kyren-williams",
+      "ladd-mcconkey",
+      "malik-nabers",
+      "puka-nacua",
+      "saquon-barkley",
+      "tyreek-hill"
+    ];
+
+    const underCoveredPlayers = coveredStarIds.flatMap((playerId) => {
+      const player = activePlayers.find((candidate) => candidate.id === playerId)!;
+      const names = generateNames([player], [], "clean");
+
+      return names.length >= 8 ? [] : [`${player.fullName}: ${names.length}`];
+    });
+
+    expect(underCoveredPlayers).toEqual([]);
+  });
+
   it("does not add broad waiver-wire filler to every skill player", () => {
     const breece = activePlayers.find((player) => player.id === "breece-hall")!;
     const ceedee = activePlayers.find((player) => player.id === "ceedee-lamb")!;

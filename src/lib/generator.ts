@@ -338,6 +338,29 @@ const keywordTemplates: Record<string, Template[]> = {
 };
 
 const playerPunProfiles: Record<string, PlayerPunProfile> = {
+  "amon-ra-st-brown": {
+    atoms: [
+      {
+        part: "alias",
+        replacement: "Sun",
+        soundsLike: ["sun"],
+        phraseHooks: ["Here Comes the Sun", "Sunshine of Your Love", "God mode"]
+      },
+      {
+        part: "alias",
+        replacement: "Sun God",
+        soundsLike: ["god"],
+        phraseHooks: ["God mode", "God of Thunder"]
+      },
+      {
+        part: "first",
+        replacement: "Ra",
+        soundsLike: ["ra", "raw"],
+        phraseHooks: ["ra ra", "raw power"]
+      }
+    ],
+    templates: []
+  },
   "breece-hall": {
     atoms: [
       {
@@ -362,6 +385,42 @@ const playerPunProfiles: Record<string, PlayerPunProfile> = {
         replacement: "Bijan",
         soundsLike: ["dijon", "beyond"],
         phraseHooks: ["Dijon mustard", "Bed Bath & Beyond", "to infinity and beyond"]
+      }
+    ],
+    templates: []
+  },
+  "de-von-achane": {
+    atoms: [
+      {
+        part: "first",
+        replacement: "De'Von",
+        soundsLike: ["divine", "devon"],
+        phraseHooks: ["divine intervention", "Devon"]
+      },
+      {
+        part: "last",
+        replacement: "Achane",
+        soundsLike: ["a chain", "chain", "chains", "chained", "insane", "asians", "machine", "train"],
+        phraseHooks: [
+          "Insane in the Membrane",
+          "Crazy Rich Asians",
+          "chain reaction",
+          "Django Unchained",
+          "Alice in Chains",
+          "Rage Against the Machine",
+          "the train has left the station"
+        ]
+      }
+    ],
+    templates: []
+  },
+  "derrick-henry": {
+    atoms: [
+      {
+        part: "alias",
+        replacement: "King Henry",
+        soundsLike: ["king", "henry"],
+        phraseHooks: ["King of the Hill", "Henry VIII", "Long Live the King"]
       }
     ],
     templates: []
@@ -396,6 +455,17 @@ const playerPunProfiles: Record<string, PlayerPunProfile> = {
         replacement: "CMC",
         soundsLike: ["run dmc", "cmc"],
         phraseHooks: ["Run-DMC"]
+      }
+    ],
+    templates: []
+  },
+  "james-cook": {
+    atoms: [
+      {
+        part: "last",
+        replacement: "Cook",
+        soundsLike: ["cook", "cooks", "cooking"],
+        phraseHooks: ["Too Many Cooks", "What's Cooking", "Cook Out"]
       }
     ],
     templates: []
@@ -447,6 +517,34 @@ const playerPunProfiles: Record<string, PlayerPunProfile> = {
       }
     ]
   },
+  "malik-nabers": {
+    atoms: [
+      {
+        part: "last",
+        replacement: "Nabers",
+        soundsLike: ["neighbors"],
+        phraseHooks: ["Won't You Be My Neighbor", "Good Neighbors", "Neighbors"]
+      }
+    ],
+    templates: []
+  },
+  "puka-nacua": {
+    atoms: [
+      {
+        part: "first",
+        replacement: "Puka",
+        soundsLike: ["puka"],
+        phraseHooks: ["puka shell"]
+      },
+      {
+        part: "last",
+        replacement: "Nacua",
+        soundsLike: ["hakuna"],
+        phraseHooks: ["Hakuna Matata"]
+      }
+    ],
+    templates: []
+  },
   "kyren-williams": {
     atoms: [
       {
@@ -454,6 +552,34 @@ const playerPunProfiles: Record<string, PlayerPunProfile> = {
         replacement: "Kyren",
         soundsLike: ["crying"],
         phraseHooks: ["for crying out loud"]
+      }
+    ],
+    templates: []
+  },
+  "saquon-barkley": {
+    atoms: [
+      {
+        part: "first",
+        replacement: "Saquon",
+        soundsLike: ["so gone"],
+        phraseHooks: ["so gone", "Gone with the Wind"]
+      },
+      {
+        part: "last",
+        replacement: "Barkley",
+        soundsLike: ["bark", "barkley"],
+        phraseHooks: ["Bark at the Moon", "no bark all bite", "Bark Side"]
+      }
+    ],
+    templates: []
+  },
+  "tyreek-hill": {
+    atoms: [
+      {
+        part: "last",
+        replacement: "Hill",
+        soundsLike: ["hill"],
+        phraseHooks: ["King of the Hill", "The Hills Have Eyes", "Hill Street Blues"]
       }
     ],
     templates: []
@@ -570,7 +696,21 @@ const referencePhrases: ReferencePhrase[] = [
     targetSound: "beyond",
     build: (atom) => `Bed, Bath, and ${atom.replacement}`,
     explain: (player, atom) =>
-      `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "beyond")} soundalike in a familiar brand phrase.`
+      `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "beyond")} soundalike in a familiar brand phrase.`,
+    variants: [
+      {
+        source: "To infinity and beyond",
+        build: (atom) => `To Infinity and ${atom.replacement}`
+      },
+      {
+        source: "Beyond belief",
+        build: (atom) => `${atom.replacement} Belief`
+      },
+      {
+        source: "Beyond the Sea",
+        build: (atom) => `${atom.replacement} the Sea`
+      }
+    ]
   },
   {
     category: "phrase",
@@ -579,7 +719,36 @@ const referencePhrases: ReferencePhrase[] = [
     targetSound: "calf",
     build: (atom) => `I Think I Pulled ${atom.replacement}`,
     explain: (player, atom) =>
-      `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "calf")} soundalike in an injury phrase.`
+      `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "calf")} soundalike in an injury phrase.`,
+    variants: [
+      {
+        source: "Calf raises",
+        build: (atom) => `${atom.replacement} Raises`
+      },
+      {
+        source: "Calf strain",
+        build: (atom) => `${atom.replacement} Strain`
+      }
+    ]
+  },
+  {
+    category: "brand",
+    source: "McCafe",
+    mode: "clean",
+    targetSound: "mccafe",
+    build: (atom) => `${atom.replacement} Latte`,
+    explain: (player, atom) =>
+      `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "mccafe")} soundalike in a coffee-brand phrase.`,
+    variants: [
+      {
+        source: "Cafe mocha",
+        build: (atom) => `${atom.replacement} Mocha`
+      },
+      {
+        source: "Coffee run",
+        build: (atom) => `${atom.replacement} Coffee Run`
+      }
+    ]
   },
   {
     category: "game",
@@ -588,7 +757,17 @@ const referencePhrases: ReferencePhrase[] = [
     targetSound: "donkey",
     build: (atom) => `${atom.replacement} Kong Country`,
     explain: (player, atom) =>
-      `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "donkey")} soundalike in the game title.`
+      `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "donkey")} soundalike in the game title.`,
+    variants: [
+      {
+        source: "Donkey Kong",
+        build: (atom) => `${atom.replacement} Kong`
+      },
+      {
+        source: "Donkey Kong Jr.",
+        build: (atom) => `${atom.replacement} Kong Jr.`
+      }
+    ]
   },
   {
     category: "game",
@@ -606,7 +785,13 @@ const referencePhrases: ReferencePhrase[] = [
     targetSound: "honky",
     build: (atom) => `${atom.replacement} Tonk Blues`,
     explain: (player, atom) =>
-      `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "honky")} soundalike in a country-song phrase.`
+      `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "honky")} soundalike in a country-song phrase.`,
+    variants: [
+      {
+        source: "Honky Cat",
+        build: (atom) => `${atom.replacement} Cat`
+      }
+    ]
   },
   {
     category: "movie",
@@ -615,7 +800,32 @@ const referencePhrases: ReferencePhrase[] = [
     targetSound: "gladiator",
     build: (atom) => `${atom.replacement}iator`,
     explain: (player, atom) =>
-      `Blends ${atom.replacement} from ${player.fullName} into the Gladiator title because the opening sound matches.`
+      `Blends ${atom.replacement} from ${player.fullName} into the Gladiator title because the opening sound matches.`,
+    variants: [
+      {
+        source: "Are you not entertained",
+        build: (atom) => `${atom.replacement}, Are You Not Entertained?`
+      }
+    ]
+  },
+  {
+    category: "phrase",
+    source: "Monkey business",
+    mode: "clean",
+    targetSound: "monkey",
+    build: (atom) => `${atom.replacement} Business`,
+    explain: (player, atom) =>
+      `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "monkey")} soundalike in a familiar phrase.`,
+    variants: [
+      {
+        source: "Monkey see, monkey do",
+        build: (atom) => `${atom.replacement} See, ${atom.replacement} Do`
+      },
+      {
+        source: "Monkey wrench",
+        build: (atom) => `${atom.replacement} Wrench`
+      }
+    ]
   },
   {
     category: "food",
@@ -624,7 +834,40 @@ const referencePhrases: ReferencePhrase[] = [
     targetSound: "ribs",
     build: (atom) => `Baby Back ${atom.replacement}`,
     explain: (player, atom) =>
-      `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "ribs")} soundalike in a food phrase.`
+      `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "ribs")} soundalike in a food phrase.`,
+    variants: [
+      {
+        source: "Spare ribs",
+        build: (atom) => `Spare ${atom.replacement}`
+      },
+      {
+        source: "Rib tips",
+        build: (atom) => `${atom.replacement} Tips`
+      },
+      {
+        source: "Ribeye",
+        build: (atom) => `${atom.replacement} Eye`
+      }
+    ]
+  },
+  {
+    category: "phrase",
+    source: "Give and take",
+    mode: "clean",
+    targetSound: "gives",
+    build: (atom) => `${atom.replacement} and Take`,
+    explain: (player, atom) =>
+      `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "gives")} soundalike in a familiar phrase.`,
+    variants: [
+      {
+        source: "Gimme the loot",
+        build: (atom) => `${atom.replacement} Me the Loot`
+      },
+      {
+        source: "Give me shelter",
+        build: (atom) => `${atom.replacement} Me Shelter`
+      }
+    ]
   },
   {
     category: "movie",
@@ -641,7 +884,21 @@ const referencePhrases: ReferencePhrase[] = [
     mode: "clean",
     targetSound: "run dmc",
     build: (atom) => `Run ${atom.replacement}`,
-    explain: (player, atom) => `Uses ${atom.replacement} from ${player.fullName} in a direct Run-DMC music reference.`
+    explain: (player, atom) => `Uses ${atom.replacement} from ${player.fullName} in a direct Run-DMC music reference.`,
+    variants: [
+      {
+        source: "It's Tricky",
+        build: (atom) => `It's Tricky ${atom.replacement}`
+      },
+      {
+        source: "Walk This Way",
+        build: (atom) => `${atom.replacement} This Way`
+      },
+      {
+        source: "King of Rock",
+        build: (atom) => `King of ${atom.replacement}`
+      }
+    ]
   },
   {
     category: "food",
@@ -650,7 +907,21 @@ const referencePhrases: ReferencePhrase[] = [
     targetSound: "dijon",
     build: (atom) => `${atom.replacement} Mustard`,
     explain: (player, atom) =>
-      `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "dijon")} soundalike in a food phrase.`
+      `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "dijon")} soundalike in a food phrase.`,
+    variants: [
+      {
+        source: "Grey Poupon",
+        build: (atom) => `${atom.replacement} Poupon`
+      },
+      {
+        source: "Dijonnaise",
+        build: (atom) => `${atom.replacement}naise`
+      },
+      {
+        source: "Pass the mustard",
+        build: (atom) => `Pass the ${atom.replacement}`
+      }
+    ]
   },
   {
     category: "candy",
@@ -747,13 +1018,46 @@ const referencePhrases: ReferencePhrase[] = [
       `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "cdc")} soundalike in an acronym phrase.`
   },
   {
+    category: "technology",
+    source: "CD-ROM",
+    mode: "clean",
+    targetSound: "cd",
+    build: (atom) => `${atom.replacement}-ROM`,
+    explain: (player, atom) =>
+      `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "cd")} soundalike in a technology phrase.`,
+    variants: [
+      {
+        source: "CD player",
+        build: (atom) => `${atom.replacement} Player`
+      },
+      {
+        source: "Compact disc",
+        build: (atom) => `Compact ${atom.replacement}`
+      },
+      {
+        source: "Burn a CD",
+        build: (atom) => `Burning ${atom.replacement}s`
+      }
+    ]
+  },
+  {
     category: "song",
     source: "Man in the Mirror",
     mode: "clean",
     targetSound: "mirror",
     build: (atom) => `The Man in the ${atom.replacement}ror`,
     explain: (player, atom) =>
-      `Uses ${atom.replacement} from ${player.fullName} as the opening sound in a mirror-themed song title.`
+      `Uses ${atom.replacement} from ${player.fullName} as the opening sound in a mirror-themed song title.`,
+    variants: [
+      {
+        source: "Mirror mirror",
+        build: (atom) => `${atom.replacement}, ${atom.replacement} on the Wall`
+      },
+      {
+        source: "Black Mirror",
+        build: (atom) => `Black ${atom.replacement}ror`
+      }
+    ]
   },
   {
     category: "song",
@@ -762,7 +1066,25 @@ const referencePhrases: ReferencePhrase[] = [
     targetSound: "city",
     build: (atom) => `We Built This ${atom.replacement}`,
     explain: (player, atom) =>
-      `Uses ${atom.replacement} from ${player.fullName}'s player association as a ${targetSoundLabel(atom, "city")} soundalike in a song title.`
+      `Uses ${atom.replacement} from ${player.fullName}'s player association as a ${targetSoundLabel(atom, "city")} soundalike in a song title.`,
+    variants: [
+      {
+        source: "Paradise City",
+        build: (atom) => `Paradise ${atom.replacement}`
+      },
+      {
+        source: "City limits",
+        build: (atom) => `${atom.replacement} Limits`
+      },
+      {
+        source: "Sin City",
+        build: (atom) => `Win ${atom.replacement}`
+      },
+      {
+        source: "Electric City",
+        build: (atom) => `Electric ${atom.replacement}`
+      }
+    ]
   },
   {
     category: "phrase",
@@ -771,7 +1093,37 @@ const referencePhrases: ReferencePhrase[] = [
     targetSound: "crying",
     build: (atom) => `For ${atom.replacement} Out Loud`,
     explain: (player, atom) =>
-      `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "crying")} soundalike in a familiar phrase.`
+      `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "crying")} soundalike in a familiar phrase.`,
+    variants: [
+      {
+        source: "No crying in baseball",
+        build: (atom) => `No ${atom.replacement} in Football`
+      },
+      {
+        source: "Crying game",
+        build: (atom) => `The ${atom.replacement} Game`
+      },
+      {
+        source: "Crying shame",
+        build: (atom) => `${atom.replacement} Shame`
+      },
+      {
+        source: "Crying over spilled milk",
+        build: (atom) => `${atom.replacement} Over Spilled Points`
+      },
+      {
+        source: "Crying Jordan",
+        build: (atom) => `${atom.replacement} Jordan`
+      },
+      {
+        source: "Crying lightning",
+        build: (atom) => `${atom.replacement} Lightning`
+      },
+      {
+        source: "Cry me a river",
+        build: (atom) => `${atom.replacement} Me a River`
+      }
+    ]
   },
   {
     category: "movie",
@@ -795,7 +1147,37 @@ const referencePhrases: ReferencePhrase[] = [
     mode: "clean",
     targetSound: "cook",
     build: (atom) => `Too Many ${pluralizeAtom(atom)}`,
-    explain: (player, atom) => `Uses ${atom.replacement} from ${player.fullName} in a direct TV-reference phrase.`
+    explain: (player, atom) => `Uses ${atom.replacement} from ${player.fullName} in a direct TV-reference phrase.`,
+    variants: [
+      {
+        source: "What's cooking",
+        build: (atom) => `What's ${atom.replacement}ing?`
+      },
+      {
+        source: "Cookout",
+        build: (atom) => `${atom.replacement}out Kings`
+      },
+      {
+        source: "Cooking with gas",
+        build: (atom) => `${atom.replacement}ing with Gas`
+      },
+      {
+        source: "Let him cook",
+        build: (atom, player) => `Let ${player.firstName} ${atom.replacement}`
+      },
+      {
+        source: "Cookbook",
+        build: (atom) => `${atom.replacement}book`
+      },
+      {
+        source: "Captain Cook",
+        build: (atom) => `Captain ${atom.replacement}`
+      },
+      {
+        source: "Cook the books",
+        build: (atom) => `${atom.replacement} the Books`
+      }
+    ]
   },
   {
     category: "song",
@@ -977,6 +1359,326 @@ const referencePhrases: ReferencePhrase[] = [
     targetSound: "brown",
     build: (atom) => `What Can ${atom.replacement} Do for You?`,
     explain: (player, atom) => `Uses ${atom.replacement} from ${player.fullName} in a familiar brand-slogan cadence.`
+  },
+  {
+    category: "song",
+    source: "Insane in the Membrane",
+    mode: "clean",
+    targetSound: "insane",
+    build: (atom) => `${atom.replacement} in the Membrane`,
+    explain: (player, atom) =>
+      `Uses ${atom.replacement} from ${player.fullName} as an ${targetSoundLabel(atom, "insane")} soundalike in a song hook.`,
+    variants: [
+      {
+        source: "Insane in the brain",
+        build: (atom) => `${atom.replacement} in the Brain`
+      }
+    ]
+  },
+  {
+    category: "movie",
+    source: "Crazy Rich Asians",
+    mode: "clean",
+    targetSound: "asians",
+    build: (atom) => `Crazy Rich ${pluralizeAtom(atom)}`,
+    explain: (player, atom) =>
+      `Uses ${atom.replacement} from ${player.fullName} as an ${targetSoundLabel(atom, "asians")} soundalike in a movie title.`
+  },
+  {
+    category: "science",
+    source: "Chain reaction",
+    mode: "clean",
+    targetSound: "chain",
+    build: (atom) => `${atom.replacement} Reaction`,
+    explain: (player, atom) =>
+      `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "chain")} soundalike in a familiar phrase.`,
+    variants: [
+      {
+        source: "Chain of fools",
+        build: (atom) => `${atom.replacement} of Fools`
+      },
+      {
+        source: "Off the chain",
+        build: (atom) => `Off the ${atom.replacement}`
+      },
+      {
+        source: "Supply chain",
+        build: (atom) => `Supply ${atom.replacement}`
+      }
+    ]
+  },
+  {
+    category: "movie",
+    source: "Django Unchained",
+    mode: "clean",
+    targetSound: "chained",
+    build: (atom) => `Django ${atom.replacement}d`,
+    explain: (player, atom) =>
+      `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "chained")} soundalike in a movie title.`
+  },
+  {
+    category: "music",
+    source: "Alice in Chains",
+    mode: "clean",
+    targetSound: "chains",
+    build: (atom) => `Alice in ${pluralizeAtom(atom)}`,
+    explain: (player, atom) =>
+      `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "chains")} soundalike in a band-name reference.`
+  },
+  {
+    category: "song",
+    source: "Rage Against the Machine",
+    mode: "clean",
+    targetSound: "machine",
+    build: (atom) => `Rage Against the ${atom.replacement}`,
+    explain: (player, atom) =>
+      `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "machine")} soundalike in a band-name reference.`,
+    variants: [
+      {
+        source: "Florence and the Machine",
+        build: (atom) => `Florence and the ${atom.replacement}`
+      }
+    ]
+  },
+  {
+    category: "phrase",
+    source: "The train has left the station",
+    mode: "clean",
+    targetSound: "train",
+    build: (atom) => `${atom.replacement} Has Left the Station`,
+    explain: (player, atom) =>
+      `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "train")} soundalike in a familiar phrase.`
+  },
+  {
+    category: "phrase",
+    source: "Divine intervention",
+    mode: "clean",
+    targetSound: "divine",
+    build: (atom) => `${atom.replacement} Intervention`,
+    explain: (player, atom) =>
+      `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "divine")} soundalike in a familiar phrase.`
+  },
+  {
+    category: "song",
+    source: "Here Comes the Sun",
+    mode: "clean",
+    targetSound: "sun",
+    build: (atom) => `Here Comes the ${atom.replacement}`,
+    explain: (player, atom) => `Uses ${atom.replacement} from ${player.fullName} in a direct sun-themed song title.`,
+    variants: [
+      {
+        source: "Sunshine of Your Love",
+        build: (atom) => `${atom.replacement}shine of Your Love`
+      },
+      {
+        source: "House of the Rising Sun",
+        build: (atom) => `House of the Rising ${atom.replacement}`
+      },
+      {
+        source: "Walking on Sunshine",
+        build: (atom) => `Walking on ${atom.replacement}shine`
+      },
+      {
+        source: "Black Hole Sun",
+        build: (atom) => `Black Hole ${atom.replacement}`
+      }
+    ]
+  },
+  {
+    category: "phrase",
+    source: "God mode",
+    mode: "clean",
+    targetSound: "god",
+    build: (atom) => `${atom.replacement} Mode`,
+    explain: (player, atom) => `Uses ${atom.replacement} from ${player.fullName} in a familiar gaming phrase.`,
+    variants: [
+      {
+        source: "God of Thunder",
+        build: (atom) => `${atom.replacement} of Thunder`
+      },
+      {
+        source: "God only knows",
+        build: (atom) => `${atom.replacement} Only Knows`
+      }
+    ]
+  },
+  {
+    category: "tv",
+    source: "King of the Hill",
+    mode: "clean",
+    targetSound: "hill",
+    build: (atom) => `King of the ${atom.replacement}`,
+    explain: (player, atom) => `Uses ${atom.replacement} from ${player.fullName} in a direct TV-title reference.`,
+    variants: [
+      {
+        source: "The Hills Have Eyes",
+        build: (atom) => `The ${pluralizeAtom(atom)} Have Eyes`
+      },
+      {
+        source: "Hill Street Blues",
+        build: (atom) => `${atom.replacement} Street Blues`
+      },
+      {
+        source: "Over the hill",
+        build: (atom) => `Over the ${atom.replacement}`
+      },
+      {
+        source: "Ain't No Mountain High Enough",
+        build: (atom) => `Ain't No ${atom.replacement} High Enough`
+      },
+      {
+        source: "Run for the hills",
+        build: (atom) => `Run for the ${pluralizeAtom(atom)}`
+      },
+      {
+        source: "Hill yeah",
+        build: (atom) => `${atom.replacement} Yeah`
+      }
+    ]
+  },
+  {
+    category: "song",
+    source: "Bark at the Moon",
+    mode: "clean",
+    targetSound: "bark",
+    build: (atom) => `${atom.replacement} at the Moon`,
+    explain: (player, atom) =>
+      `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "bark")} soundalike in a song title.`,
+    variants: [
+      {
+        source: "No bark all bite",
+        build: (atom) => `No ${atom.replacement}, All Bite`
+      },
+      {
+        source: "The dark side",
+        build: (atom) => `The ${atom.replacement} Side`
+      },
+      {
+        source: "Bark up the wrong tree",
+        build: (atom) => `${atom.replacement} Up the Wrong Tree`
+      },
+      {
+        source: "Bark twice",
+        build: (atom) => `${atom.replacement} Twice`
+      }
+    ]
+  },
+  {
+    category: "song",
+    source: "So Gone",
+    mode: "clean",
+    targetSound: "so gone",
+    build: (atom) => `${atom.replacement} Gone`,
+    explain: (player, atom) =>
+      `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "so gone")} soundalike in a song-title phrase.`,
+    variants: [
+      {
+        source: "Gone with the Wind",
+        build: (atom) => `${atom.replacement} with the Wind`
+      },
+      {
+        source: "Gone in 60 Seconds",
+        build: (atom) => `${atom.replacement} in 60 Seconds`
+      }
+    ]
+  },
+  {
+    category: "tv",
+    source: "Won't You Be My Neighbor",
+    mode: "clean",
+    targetSound: "neighbors",
+    build: (atom) => `Won't You Be My ${atom.replacement}?`,
+    explain: (player, atom) =>
+      `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "neighbors")} soundalike in a TV phrase.`,
+    variants: [
+      {
+        source: "Good Neighbors",
+        build: (atom) => `Good ${atom.replacement}`
+      },
+      {
+        source: "Neighbors",
+        build: (atom) => `${atom.replacement} from Hell`
+      },
+      {
+        source: "The Neighborhood",
+        build: (atom) => `Welcome to the ${atom.replacement}hood`
+      },
+      {
+        source: "Hello Neighbor",
+        build: (atom) => `Hello ${atom.replacement}`
+      },
+      {
+        source: "Love thy neighbor",
+        build: (atom) => `Love Thy ${atom.replacement}`
+      },
+      {
+        source: "Mister Rogers' Neighborhood",
+        build: (atom) => `Mister ${atom.replacement}hood`
+      },
+      {
+        source: "Beautiful day in the neighborhood",
+        build: (atom) => `Beautiful Day in the ${atom.replacement}hood`
+      }
+    ]
+  },
+  {
+    category: "phrase",
+    source: "Puka shell",
+    mode: "clean",
+    targetSound: "puka",
+    build: (atom) => `${atom.replacement} Shells`,
+    explain: (player, atom) => `Uses ${atom.replacement} from ${player.fullName} in a direct phrase.`,
+    variants: [
+      {
+        source: "Shell game",
+        build: (atom) => `${atom.replacement} Shell Game`
+      },
+      {
+        source: "Shell shock",
+        build: (atom) => `${atom.replacement} Shell Shock`
+      },
+      {
+        source: "Puka shell necklace",
+        build: (atom) => `${atom.replacement} Shell Necklace`
+      }
+    ]
+  },
+  {
+    category: "movie",
+    source: "Hakuna Matata",
+    mode: "clean",
+    targetSound: "hakuna",
+    build: (atom) => `${atom.replacement} Matata`,
+    explain: (player, atom) =>
+      `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(atom, "hakuna")} soundalike in a movie-song title.`,
+    variants: [
+      {
+        source: "Hakuna Matata",
+        build: (atom, player) => `${player.firstName} ${atom.replacement} Matata`
+      },
+      {
+        source: "No worries",
+        build: (atom) => `${atom.replacement} No Worries`
+      },
+      {
+        source: "Hakuna Matata",
+        build: (atom) => `${atom.replacement} Means No Worries`
+      }
+    ]
+  },
+  {
+    category: "slogan",
+    source: "Long live the king",
+    mode: "clean",
+    targetSound: "king",
+    build: (atom) => `Long Live ${atom.replacement}`,
+    explain: (player, atom) => `Uses ${atom.replacement} from ${player.fullName} in a direct royal slogan.`,
+    variants: [
+      {
+        source: "Return of the King",
+        build: (atom) => `Return of ${atom.replacement}`
+      }
+    ]
   }
 ];
 
