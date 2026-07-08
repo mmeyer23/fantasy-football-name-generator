@@ -42,6 +42,13 @@ type ReferencePhraseVariant = {
   explain?: (player: Player, atom: PlayerPunAtom) => string;
 };
 
+type PhraseFrame = {
+  source: string;
+  mode: ContentMode;
+  targetSound: string;
+  build: (atom: PlayerPunAtom, player: Player) => string;
+};
+
 type KeywordProfile = {
   id: string;
   label: string;
@@ -2196,48 +2203,133 @@ function generatedIdeaTemplatesForPlayer(player: Player, mode: ContentMode): Gen
   return ideas;
 }
 
-function cleverPhraseFrameIdeasForPlayer(player: Player): GeneratedName[] {
-  const { firstName, lastName, fullName } = player;
-  const names = [
-    `${firstName} Things First`,
-    `${firstName} and the Giant Peach`,
-    `Everybody Loves ${firstName}`,
-    `There's Something About ${firstName}`,
-    `${firstName} Night Lights`,
-    `${firstName} in the Middle`,
-    `${firstName}'s Anatomy`,
-    `${firstName} Got Back`,
-    `${lastName} Actually`,
-    `${lastName} Impossible`,
-    `The ${lastName} Ultimatum`,
-    `The ${lastName} Supremacy`,
-    `The ${lastName} Identity`,
-    `${lastName} of Dreams`,
-    `House of ${lastName}`,
-    `How I Met Your ${lastName}`,
-    `Saving Private ${lastName}`,
-    `${lastName} at Tiffany's`,
-    `${lastName} & Order`,
-    `${lastName} Club`,
-    `${lastName} Story`,
-    `Return of the ${lastName}`,
-    `The ${lastName} Knight`,
-    `${lastName} Hard`,
-    `${lastName} Harder`,
-    `The ${lastName} Games`,
-    `${lastName} Almighty`,
-    `${lastName} Royale`,
-    `${lastName} on the Roof`,
-    `The ${lastName} Show`,
-    `Full Metal ${lastName}`,
-    `${lastName} Wars`,
-    `${lastName} Trek`,
-    `${lastName} Runner`,
-    `${lastName} Island`,
-    `${fullName} Experience`
-  ];
+const supplementalPhraseFrames: PhraseFrame[] = [
+  {
+    source: "First things first",
+    mode: "clean",
+    targetSound: "first",
+    build: (atom) => `${atom.replacement} Things First`
+  },
+  {
+    source: "James and the Giant Peach",
+    mode: "clean",
+    targetSound: "james",
+    build: (atom) => `${atom.replacement} and the Giant Peach`
+  },
+  {
+    source: "Grey's Anatomy",
+    mode: "clean",
+    targetSound: "grey",
+    build: (atom) => `${atom.replacement}'s Anatomy`
+  },
+  {
+    source: "Baby Got Back",
+    mode: "clean",
+    targetSound: "baby",
+    build: (atom) => `${atom.replacement} Got Back`
+  },
+  {
+    source: "Love Actually",
+    mode: "clean",
+    targetSound: "love",
+    build: (atom) => `${atom.replacement} Actually`
+  },
+  {
+    source: "The Bourne Identity",
+    mode: "clean",
+    targetSound: "born",
+    build: (atom) => `The ${atom.replacement} Identity`
+  },
+  {
+    source: "The Bourne Supremacy",
+    mode: "clean",
+    targetSound: "born",
+    build: (atom) => `The ${atom.replacement} Supremacy`
+  },
+  {
+    source: "Field of Dreams",
+    mode: "clean",
+    targetSound: "field",
+    build: (atom) => `${atom.replacement} of Dreams`
+  },
+  {
+    source: "House of Cards",
+    mode: "clean",
+    targetSound: "cards",
+    build: (atom) => `House of ${atom.replacement}`
+  },
+  {
+    source: "Saving Private Ryan",
+    mode: "clean",
+    targetSound: "ryan",
+    build: (atom) => `Saving Private ${atom.replacement}`
+  },
+  {
+    source: "Law & Order",
+    mode: "clean",
+    targetSound: "law",
+    build: (atom) => `${atom.replacement} & Order`
+  },
+  {
+    source: "Toy Story",
+    mode: "clean",
+    targetSound: "toy",
+    build: (atom) => `${atom.replacement} Story`
+  },
+  {
+    source: "The Dark Knight",
+    mode: "clean",
+    targetSound: "dark",
+    build: (atom) => `The ${atom.replacement} Knight`
+  },
+  {
+    source: "Die Hard",
+    mode: "clean",
+    targetSound: "die",
+    build: (atom) => `${atom.replacement} Hard`
+  },
+  {
+    source: "Bruce Almighty",
+    mode: "clean",
+    targetSound: "bruce",
+    build: (atom) => `${atom.replacement} Almighty`
+  },
+  {
+    source: "Star Wars",
+    mode: "clean",
+    targetSound: "star",
+    build: (atom) => `${atom.replacement} Wars`
+  },
+  {
+    source: "Star Trek",
+    mode: "clean",
+    targetSound: "star",
+    build: (atom) => `${atom.replacement} Trek`
+  },
+  {
+    source: "Blade Runner",
+    mode: "clean",
+    targetSound: "blade",
+    build: (atom) => `${atom.replacement} Runner`
+  },
+  {
+    source: "Jimi Hendrix Experience",
+    mode: "clean",
+    targetSound: "hendrix",
+    build: (atom, player) => `${player.fullName} Experience`
+  }
+];
 
-  return names.map((name) => generatedIdea(player, name, "clever phrase-frame generator"));
+function cleverPhraseFrameIdeasForPlayer(player: Player): GeneratedName[] {
+  const atoms = getPlayerPunAtoms(player);
+
+  return supplementalPhraseFrames
+    .filter((frame) => frame.mode === "clean")
+    .flatMap((frame) =>
+      atoms
+        .filter((atom) => atomMatchesTargetSound(atom, frame.targetSound))
+        .map((atom) => generatedPhraseFrameIdea(player, atom, frame))
+    );
 }
 
 function generatedIdea(player: Player, name: string, reason: string): GeneratedName {
@@ -2246,6 +2338,18 @@ function generatedIdea(player: Player, name: string, reason: string): GeneratedN
     source: player.fullName,
     mode: "clean",
     reason: `Generated from ${player.fullName}'s name using the ${reason}.`
+  };
+}
+
+function generatedPhraseFrameIdea(player: Player, atom: PlayerPunAtom, frame: PhraseFrame): GeneratedName {
+  return {
+    name: frame.build(atom, player),
+    source: player.fullName,
+    mode: frame.mode,
+    reason: `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(
+      atom,
+      frame.targetSound
+    )} soundalike in "${frame.source}".`
   };
 }
 
@@ -2533,7 +2637,11 @@ function hasTrait(player: Player, trait: string): boolean {
 }
 
 function atomMatchesReferencePhrase(atom: PlayerPunAtom, phrase: ReferencePhrase): boolean {
-  const normalizedTarget = normalizeKeyword(phrase.targetSound);
+  return atomMatchesTargetSound(atom, phrase.targetSound);
+}
+
+function atomMatchesTargetSound(atom: PlayerPunAtom, targetSound: string): boolean {
+  const normalizedTarget = normalizeKeyword(targetSound);
 
   return atom.soundsLike.some((sound) => normalizeKeyword(sound) === normalizedTarget);
 }

@@ -198,7 +198,7 @@ describe("generateNames", () => {
     );
   });
 
-  it("keeps rich phrase-family coverage across covered fantasy stars", () => {
+  it("keeps high-confidence phrase-family coverage across covered fantasy stars", () => {
     const coveredStarIds = [
       "amon-ra-st-brown",
       "breece-hall",
@@ -223,23 +223,26 @@ describe("generateNames", () => {
       const player = activePlayers.find((candidate) => candidate.id === playerId)!;
       const names = generateNames([player], [], "clean");
 
-      return names.length >= 24 ? [] : [`${player.fullName}: ${names.length}`];
+      return names.length >= 8 ? [] : [`${player.fullName}: ${names.length}`];
     });
 
     expect(underCoveredPlayers).toEqual([]);
   });
 
-  it("generates supplemental ideas for stars beyond cached phrase hits", () => {
+  it("generates supplemental ideas without disconnected phrase substitutions", () => {
     const kelce = activePlayers.find((player) => player.id === "travis-kelce")!;
     const henry = activePlayers.find((player) => player.id === "derrick-henry")!;
 
     const kelceNames = generateNames([kelce], [], "clean").map((result) => result.name);
     const henryNames = generateNames([henry], [], "clean").map((result) => result.name);
 
-    expect(kelceNames.length).toBeGreaterThanOrEqual(24);
-    expect(henryNames.length).toBeGreaterThanOrEqual(24);
+    expect(kelceNames.length).toBeGreaterThanOrEqual(8);
+    expect(henryNames.length).toBeGreaterThanOrEqual(18);
     expect(kelceNames).toEqual(
-      expect.arrayContaining(["Kelce Kingdom", "Kelce Mismatch", "TK Takeover", "The Kelce Supremacy"])
+      expect.arrayContaining(["Kelce Grammar", "Kelce Kingdom", "Kelce Mismatch", "TK Takeover"])
+    );
+    expect(kelceNames).not.toEqual(
+      expect.arrayContaining(["Travis's Anatomy", "Travis Got Back", "The Kelce Supremacy"])
     );
     expect(henryNames).toEqual(
       expect.arrayContaining([
@@ -261,7 +264,7 @@ describe("generateNames", () => {
       (result) => result.reason.includes("phrase") || result.reason.includes("song") || result.reason.includes("TV")
     ).length;
 
-    expect(phraseLikeCount).toBeGreaterThanOrEqual(16);
+    expect(phraseLikeCount).toBeGreaterThanOrEqual(12);
   });
 
   it("does not add broad waiver-wire filler to every skill player", () => {
