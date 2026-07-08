@@ -1,3 +1,4 @@
+import { phraseCorpus, type PhraseCorpusEntry, type PhraseCorpusTarget } from "../data/phraseCorpus";
 import type { Player } from "../data/players";
 
 export type ContentMode = "clean" | "explicit";
@@ -8,6 +9,29 @@ export type GeneratedName = {
   mode: ContentMode;
   reason: string;
   keyword?: string;
+  referencePhrase?: string;
+  replacedWord?: string;
+  playerAtom?: string;
+  matchKind?: PunMatchKind;
+  score?: number;
+  sourceType?: GeneratedNameSourceType;
+  isValidatedPun?: boolean;
+};
+
+export type PunMatchKind = "exact" | "soundalike" | "alias" | "phonetic" | "rhyme" | "curated";
+
+export type GeneratedNameSourceType =
+  | "phrase-corpus"
+  | "curated-reference"
+  | "curated-template"
+  | "keyword"
+  | "custom-keyword"
+  | "fallback";
+
+export type PunMatch = {
+  matchKind: PunMatchKind;
+  score: number;
+  matchedSound: string;
 };
 
 type Template = {
@@ -81,6 +105,7 @@ type PlayerPunProfile = {
 };
 
 const MAX_GENERATED_NAMES = 50;
+const MAX_NAMES_PER_REPLACED_WORD = 12;
 const MIN_CUSTOM_KEYWORD_LENGTH = 2;
 
 const cleanModeBlockedTerms = [
@@ -530,6 +555,18 @@ const playerPunProfiles: Record<string, PlayerPunProfile> = {
   "justin-jefferson": {
     atoms: [
       {
+        part: "first",
+        replacement: "Justin",
+        soundsLike: ["just", "just in", "justice"],
+        phraseHooks: ["Just in Time", "Just in Case", "Justice League"]
+      },
+      {
+        part: "last",
+        replacement: "Jefferson",
+        soundsLike: ["jefferson", "jetsons"],
+        phraseHooks: ["Jefferson Airplane", "The Jetsons"]
+      },
+      {
         part: "alias",
         replacement: "Griddy",
         soundsLike: ["city"],
@@ -637,6 +674,23 @@ const playerPunProfiles: Record<string, PlayerPunProfile> = {
         replacement: "Hill",
         soundsLike: ["hill"],
         phraseHooks: ["King of the Hill", "The Hills Have Eyes", "Hill Street Blues"]
+      }
+    ],
+    templates: []
+  },
+  "travis-kelce": {
+    atoms: [
+      {
+        part: "last",
+        replacement: "Kelce",
+        soundsLike: ["kelsey", "chelsea", "else"],
+        phraseHooks: ["Kelsey Grammer", "Chelsea Dagger", "Nothing Else Matters"]
+      },
+      {
+        part: "alias",
+        replacement: "TK",
+        soundsLike: ["tk"],
+        phraseHooks: ["TK"]
       }
     ],
     templates: []
@@ -2140,6 +2194,7 @@ export function generateNames(
   const activeKeywordProfiles = resolveKeywordProfiles(keywords);
   const customKeywordProfiles = resolveCustomKeywordProfiles(keywords, activeKeywordProfiles);
   const names = [
+    ...players.flatMap((player) => phraseCorpusTemplatesForPlayer(player, mode)),
     ...players.flatMap((player) => templatesForPlayerPunProfile(player, mode)),
     ...players.flatMap((player) => referencePhraseTemplatesForPlayer(player, mode)),
     ...players.flatMap((player) => templatesForPlayer(player, mode)),
@@ -2150,12 +2205,10 @@ export function generateNames(
     ...players.flatMap((player) =>
       customKeywordProfiles.flatMap((profile) => templatesForCustomPlayerKeyword(player, profile, mode))
     ),
-    ...players.flatMap((player) => referenceTemplatesForPlayer(player, mode)),
-    ...players.flatMap((player) => generatedIdeaTemplatesForPlayer(player, mode)),
     ...customKeywordProfiles.flatMap((profile) => referenceTemplatesForCustomKeyword(profile, mode))
   ];
 
-  return dedupe(names).filter((name) => isAllowedForMode(name, mode)).slice(0, MAX_GENERATED_NAMES);
+  return rankGeneratedNames(dedupe(names).filter((name) => isAllowedForMode(name, mode))).slice(0, MAX_GENERATED_NAMES);
 }
 
 function templatesForPlayer(player: Player, mode: ContentMode): GeneratedName[] {
@@ -2165,8 +2218,38 @@ function templatesForPlayer(player: Player, mode: ContentMode): GeneratedName[] 
       name: template.name,
       source: player.fullName,
       mode: template.mode,
-      reason: template.reason
+      reason: template.reason,
+      ...curatedTemplateMetadata(player, template)
     }));
+}
+
+function phraseCorpusTemplatesForPlayer(player: Player, mode: ContentMode): GeneratedName[] {
+  const atoms = getPlayerPunAtoms(player);
+  const namesByTarget = new Map<string, GeneratedName[]>();
+
+  for (const entry of phraseCorpus) {
+    if (mode !== "explicit" && entry.mode === "explicit") {
+      continue;
+    }
+
+    for (const target of entry.targets) {
+      for (const atom of atoms) {
+        const match = matchPlayerAtomToTarget(atom, target.targetSound);
+
+        if (!match) {
+          continue;
+        }
+
+        const generatedName = generatedPhraseCorpusName(player, atom, entry, target, match);
+        const targetKey = `${normalizeKeyword(player.id)}:${normalizeKeyword(target.targetSound)}`;
+        namesByTarget.set(targetKey, [...(namesByTarget.get(targetKey) ?? []), generatedName]);
+      }
+    }
+  }
+
+  return [...namesByTarget.values()].flatMap((names) =>
+    names.sort((first, second) => (second.score ?? 0) - (first.score ?? 0)).slice(0, MAX_NAMES_PER_REPLACED_WORD)
+  );
 }
 
 function generatedIdeaTemplatesForPlayer(player: Player, mode: ContentMode): GeneratedName[] {
@@ -2349,7 +2432,69 @@ function generatedPhraseFrameIdea(player: Player, atom: PlayerPunAtom, frame: Ph
     reason: `Uses ${atom.replacement} from ${player.fullName} as a ${targetSoundLabel(
       atom,
       frame.targetSound
-    )} soundalike in "${frame.source}".`
+    )} soundalike in "${frame.source}".`,
+    referencePhrase: frame.source,
+    replacedWord: frame.targetSound,
+    playerAtom: atom.replacement,
+    matchKind: "soundalike",
+    score: 82,
+    sourceType: "curated-reference",
+    isValidatedPun: true
+  };
+}
+
+function generatedPhraseCorpusName(
+  player: Player,
+  atom: PlayerPunAtom,
+  entry: PhraseCorpusEntry,
+  target: PhraseCorpusTarget,
+  match: PunMatch
+): GeneratedName {
+  const score = Math.min(100, match.score + Math.round(entry.popularityScore / 10));
+
+  return {
+    name: renderPhraseTemplate(target.template, player, atom),
+    source: player.fullName,
+    mode: entry.mode,
+    reason: `Uses ${atom.replacement} from ${player.fullName} as a ${match.matchedSound} ${match.matchKind} match for "${target.replacedWord}" in "${entry.text}".`,
+    referencePhrase: entry.text,
+    replacedWord: target.replacedWord,
+    playerAtom: atom.replacement,
+    matchKind: match.matchKind,
+    score,
+    sourceType: "phrase-corpus",
+    isValidatedPun: true
+  };
+}
+
+function renderPhraseTemplate(template: string, player: Player, atom: PlayerPunAtom): string {
+  return template
+    .split("{atomPossessive}")
+    .join(possessiveAtom(atom))
+    .split("{atomPlural}")
+    .join(pluralizeAtom(atom))
+    .split("{atom}")
+    .join(atom.replacement)
+    .split("{playerFirst}")
+    .join(player.firstName)
+    .split("{playerLast}")
+    .join(player.lastName)
+    .split("{playerFull}")
+    .join(player.fullName);
+}
+
+function curatedTemplateMetadata(player: Player, template: Template): Pick<
+  GeneratedName,
+  "referencePhrase" | "replacedWord" | "playerAtom" | "matchKind" | "score" | "sourceType" | "isValidatedPun"
+> {
+  return {
+    referencePhrase: template.tags.join(", "),
+    replacedWord: "curated pun hook",
+    playerAtom: player.fullName,
+    matchKind: "curated",
+    score: template.mode === "explicit" ? 74 : 78,
+    sourceType: "curated-template",
+    isValidatedPun: true
   };
 }
 
@@ -2362,7 +2507,8 @@ function templatesForKeyword(keyword: string, mode: ContentMode): GeneratedName[
       source: keyword,
       mode: template.mode,
       reason: template.reason,
-      keyword
+      keyword,
+      sourceType: "keyword"
     }));
 }
 
@@ -2375,7 +2521,8 @@ function templatesForPlayerKeyword(player: Player, keywordProfile: KeywordProfil
       source: `${player.fullName} + ${keywordProfile.label}`,
       mode: template.mode,
       reason: template.reason(player, keywordProfile.label),
-      keyword: keywordProfile.label
+      keyword: keywordProfile.label,
+      sourceType: "keyword"
     }));
 }
 
@@ -2406,7 +2553,8 @@ function templatesForCustomPlayerKeyword(
       source: `${player.fullName} + ${keywordProfile.label}`,
       mode: template.mode,
       reason: template.reason,
-      keyword: keywordProfile.label
+      keyword: keywordProfile.label,
+      sourceType: "custom-keyword"
     }));
 }
 
@@ -2423,34 +2571,50 @@ function templatesForPlayerPunProfile(player: Player, mode: ContentMode): Genera
       name: template.name,
       source: player.fullName,
       mode: template.mode,
-      reason: `${template.reason} Sound hooks: ${summarizePunAtoms(getPlayerPunAtoms(player))}.`
+      reason: `${template.reason} Sound hooks: ${summarizePunAtoms(getPlayerPunAtoms(player))}.`,
+      ...curatedTemplateMetadata(player, template)
     }));
 }
 
 export function getPlayerPunAtoms(player: Player): PlayerPunAtom[] {
   const profile = playerPunProfiles[player.id];
+  const initials = playerInitials(player);
   const baselineAtoms: PlayerPunAtom[] = [
     {
       part: "first",
       replacement: player.firstName,
-      soundsLike: [player.firstName],
+      soundsLike: namePartSoundVariants(player.firstName),
       phraseHooks: [player.firstName]
     },
     {
       part: "last",
       replacement: player.lastName,
-      soundsLike: [player.lastName],
+      soundsLike: namePartSoundVariants(player.lastName),
       phraseHooks: [player.lastName]
+    },
+    {
+      part: "alias",
+      replacement: initials,
+      soundsLike: [initials],
+      phraseHooks: [initials]
     },
     ...(player.aliases ?? []).map((alias): PlayerPunAtom => ({
       part: "alias",
       replacement: alias,
-      soundsLike: [alias],
+      soundsLike: namePartSoundVariants(alias),
       phraseHooks: [alias]
     }))
   ];
 
   return dedupePunAtoms([...baselineAtoms, ...(profile?.atoms ?? [])]);
+}
+
+function namePartSoundVariants(value: string): string[] {
+  const normalizedValue = normalizeKeyword(value);
+  const compactValue = normalizedValue.replace(/\s+/g, "");
+  const parts = normalizedValue.split(" ").filter(Boolean);
+
+  return [...new Set([value, normalizedValue, compactValue, ...parts].filter(Boolean))];
 }
 
 function summarizePunAtoms(atoms: PlayerPunAtom[]): string {
@@ -2475,17 +2639,36 @@ function referencePhraseVariantsForAtom(
   phrase: ReferencePhrase
 ): GeneratedName[] {
   const baseReason = phrase.explain(player, atom);
+  const match = matchPlayerAtomToTarget(atom, phrase.targetSound) ?? {
+    matchKind: "curated" as const,
+    score: 75,
+    matchedSound: phrase.targetSound
+  };
   const baseName: GeneratedName = {
     name: phrase.build(atom, player),
     source: player.fullName,
     mode: phrase.mode,
-    reason: baseReason
+    reason: baseReason,
+    referencePhrase: phrase.source,
+    replacedWord: phrase.targetSound,
+    playerAtom: atom.replacement,
+    matchKind: match.matchKind,
+    score: match.score,
+    sourceType: "curated-reference",
+    isValidatedPun: true
   };
   const variants = (phrase.variants ?? []).map((variant) => ({
     name: variant.build(atom, player),
     source: player.fullName,
     mode: phrase.mode,
-    reason: variant.explain?.(player, atom) ?? `${baseReason} Variant source: ${variant.source}.`
+    reason: variant.explain?.(player, atom) ?? `${baseReason} Variant source: ${variant.source}.`,
+    referencePhrase: variant.source,
+    replacedWord: phrase.targetSound,
+    playerAtom: atom.replacement,
+    matchKind: match.matchKind,
+    score: Math.max(0, match.score - 3),
+    sourceType: "curated-reference" as const,
+    isValidatedPun: true
   }));
 
   return [baseName, ...variants];
@@ -2547,7 +2730,8 @@ function referenceTemplatesForCustomKeyword(
       source: keywordProfile.original,
       mode: template.mode,
       reason: template.reason,
-      keyword: keywordProfile.label
+      keyword: keywordProfile.label,
+      sourceType: "custom-keyword"
     }));
 }
 
@@ -2641,9 +2825,52 @@ function atomMatchesReferencePhrase(atom: PlayerPunAtom, phrase: ReferencePhrase
 }
 
 function atomMatchesTargetSound(atom: PlayerPunAtom, targetSound: string): boolean {
-  const normalizedTarget = normalizeKeyword(targetSound);
+  return matchPlayerAtomToTarget(atom, targetSound) !== undefined;
+}
 
-  return atom.soundsLike.some((sound) => normalizeKeyword(sound) === normalizedTarget);
+export function matchPlayerAtomToTarget(atom: PlayerPunAtom, targetSound: string): PunMatch | undefined {
+  const normalizedTarget = normalizeKeyword(targetSound);
+  const normalizedReplacement = normalizeKeyword(atom.replacement);
+  const normalizedSounds = atom.soundsLike.map((sound) => normalizeKeyword(sound)).filter(Boolean);
+  const exactSound = normalizedSounds.find((sound) => sound === normalizedTarget);
+
+  if (exactSound && normalizedReplacement === normalizedTarget) {
+    return {
+      matchKind: atom.part === "alias" ? "alias" : "exact",
+      score: atom.part === "alias" ? 92 : 100,
+      matchedSound: exactSound
+    };
+  }
+
+  if (exactSound) {
+    return {
+      matchKind: atom.part === "alias" ? "alias" : "soundalike",
+      score: atom.part === "alias" ? 90 : 88,
+      matchedSound: exactSound
+    };
+  }
+
+  const phoneticSound = normalizedSounds.find((sound) => isStrongPhoneticMatch(sound, normalizedTarget));
+
+  if (phoneticSound) {
+    return {
+      matchKind: "phonetic",
+      score: 72,
+      matchedSound: phoneticSound
+    };
+  }
+
+  const rhymeSound = normalizedSounds.find((sound) => isStrongRhymeMatch(sound, normalizedTarget));
+
+  if (rhymeSound) {
+    return {
+      matchKind: "rhyme",
+      score: 68,
+      matchedSound: rhymeSound
+    };
+  }
+
+  return undefined;
 }
 
 function targetSoundLabel(atom: PlayerPunAtom, targetSound: string): string {
@@ -2656,6 +2883,74 @@ function pluralizeAtom(atom: PlayerPunAtom): string {
 
 function possessiveAtom(atom: PlayerPunAtom): string {
   return atom.replacement.endsWith("s") ? `${atom.replacement}'` : `${atom.replacement}'s`;
+}
+
+function isStrongPhoneticMatch(sound: string, target: string): boolean {
+  if (sound.length < 4 || target.length < 4) {
+    return false;
+  }
+
+  return soundex(sound) === soundex(target) && ending(sound, 2) === ending(target, 2);
+}
+
+function isStrongRhymeMatch(sound: string, target: string): boolean {
+  if (sound.length < 5 || target.length < 5) {
+    return false;
+  }
+
+  return ending(sound, 3) === ending(target, 3);
+}
+
+function ending(value: string, length: number): string {
+  return value.replace(/\s+/g, "").slice(-length);
+}
+
+function soundex(value: string): string {
+  const normalizedValue = normalizeKeyword(value).replace(/[^a-z]/g, "");
+
+  if (!normalizedValue) {
+    return "";
+  }
+
+  const [firstLetter, ...letters] = normalizedValue.toUpperCase().split("");
+  const codes: Record<string, string> = {
+    B: "1",
+    F: "1",
+    P: "1",
+    V: "1",
+    C: "2",
+    G: "2",
+    J: "2",
+    K: "2",
+    Q: "2",
+    S: "2",
+    X: "2",
+    Z: "2",
+    D: "3",
+    T: "3",
+    L: "4",
+    M: "5",
+    N: "5",
+    R: "6"
+  };
+  let previousCode = codes[firstLetter] ?? "";
+  const encoded = letters.flatMap((letter) => {
+    const code = codes[letter] ?? "";
+
+    if (!code) {
+      previousCode = "";
+      return [];
+    }
+
+    if (code === previousCode) {
+      return [];
+    }
+
+    previousCode = code;
+    return [code];
+  });
+
+  return `${firstLetter}${encoded.join("")}`.padEnd(4, "0").slice(0, 4);
 }
 
 export function isAllowedForMode(generatedName: GeneratedName, mode: ContentMode): boolean {
@@ -2707,6 +3002,25 @@ function dedupe(names: GeneratedName[]): GeneratedName[] {
 
     seen.add(key);
     return true;
+  });
+}
+
+function rankGeneratedNames(names: GeneratedName[]): GeneratedName[] {
+  return [...names].sort((first, second) => {
+    const firstValidated = first.isValidatedPun ? 1 : 0;
+    const secondValidated = second.isValidatedPun ? 1 : 0;
+
+    if (firstValidated !== secondValidated) {
+      return secondValidated - firstValidated;
+    }
+
+    const scoreDelta = (second.score ?? 0) - (first.score ?? 0);
+
+    if (scoreDelta !== 0) {
+      return scoreDelta;
+    }
+
+    return first.name.localeCompare(second.name);
   });
 }
 

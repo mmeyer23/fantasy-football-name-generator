@@ -81,17 +81,19 @@ Owns static and generated data files:
 - Active players.
 - Teams and aliases.
 - Phrase libraries.
+- Phrase corpus imports and audit tooling.
 - Explicit/clean tags.
 
 ## Generation Strategy
 
-The first generator should be deterministic:
+The generator is deterministic and no-AI by default:
 
-- Normalize player names into usable pieces.
-- Match name pieces against phrase templates.
-- Use curated phrase libraries for movies, songs, shows, and sports sayings.
-- Score candidates by recognizability, player-name fit, keyword relevance, and content mode.
-- Remove duplicates and weak matches.
+- Expand player names into pun atoms: first name, last name, aliases, initials, soundalikes, and curated player associations.
+- Match those atoms against a structured phrase corpus of movies, songs, shows, books, games, brands, idioms, slogans, sports phrases, and food references.
+- Generate a team name only when a phrase target has a defensible exact, alias, soundalike, phonetic, or rhyme match to a player atom.
+- Store validation metadata on every player-pun result: reference phrase, replaced word, player atom, match kind, score, and source type.
+- Rank candidates by match quality and phrase recognizability, then de-duplicate and cap repeated sound families.
+- Keep keyword/theme names separate from validated player puns so generic containers do not count toward the 20-pun target.
 
 Examples:
 
@@ -100,7 +102,9 @@ Examples:
 - `Game of Thrones` keyword -> `Game of Throws`
 - `Marvel` keyword -> `Gridiron Guardians`
 
-AI-assisted generation can be considered later, but deterministic generation should remain the foundation so results are testable and filterable.
+AI generation is intentionally out of scope for the current architecture to avoid API-key handling, unpredictable cost, and inconsistent quality.
+
+The phrase corpus can be expanded from open/licensed data sources such as Wikidata, MusicBrainz, and Open Library. Competitor fantasy-name sites may be audited for coverage patterns, but exact competitor names should not be imported into production data.
 
 ## Data Strategy
 
@@ -126,4 +130,3 @@ Tests should focus on the parts most likely to regress:
 - Clean/explicit filtering.
 - Generation ranking and de-duplication.
 - Keyword relevance.
-

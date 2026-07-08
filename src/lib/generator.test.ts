@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { activePlayers } from "../data/players";
-import { generateNames, getPlayerPunAtoms, isAllowedForMode, isCleanSafeName } from "./generator";
+import {
+  generateNames,
+  getPlayerPunAtoms,
+  isAllowedForMode,
+  isCleanSafeName,
+  matchPlayerAtomToTarget,
+  type PlayerPunAtom
+} from "./generator";
 
 describe("generateNames", () => {
   it("filters explicit names out of clean mode", () => {
@@ -58,8 +65,8 @@ describe("generateNames", () => {
 
     expect(names.length).toBeGreaterThanOrEqual(25);
     expect(names.length).toBeLessThanOrEqual(50);
-    expect(nameText).toContain("The Lamb King");
-    expect(nameText).toContain("Pitts and Giggles");
+    expect(nameText).toContain("Silence of the Lamb");
+    expect(nameText).toContain("Pitts Creek");
   });
 
   it("rejects weak movie substitutions that do not make a real pun", () => {
@@ -239,10 +246,17 @@ describe("generateNames", () => {
     expect(kelceNames.length).toBeGreaterThanOrEqual(8);
     expect(henryNames.length).toBeGreaterThanOrEqual(18);
     expect(kelceNames).toEqual(
-      expect.arrayContaining(["Kelce Grammar", "Kelce Kingdom", "Kelce Mismatch", "TK Takeover"])
+      expect.arrayContaining(["Kelce Grammar", "Nothing Kelce Matters", "Kelce Dagger", "No One Kelce"])
     );
     expect(kelceNames).not.toEqual(
-      expect.arrayContaining(["Travis's Anatomy", "Travis Got Back", "The Kelce Supremacy"])
+      expect.arrayContaining([
+        "Travis's Anatomy",
+        "Travis Got Back",
+        "The Kelce Supremacy",
+        "Kelce Kingdom",
+        "Kelce Mismatch",
+        "TK Takeover"
+      ])
     );
     expect(henryNames).toEqual(
       expect.arrayContaining([
@@ -265,6 +279,80 @@ describe("generateNames", () => {
     ).length;
 
     expect(phraseLikeCount).toBeGreaterThanOrEqual(12);
+  });
+
+  it("matches player atoms only when the sound relationship is defensible", () => {
+    const atom = (replacement: string, soundsLike: string[]): PlayerPunAtom => ({
+      part: "last",
+      replacement,
+      soundsLike,
+      phraseHooks: []
+    });
+
+    expect(matchPlayerAtomToTarget(atom("Breece", ["reese"]), "Reese")).toMatchObject({ matchKind: "soundalike" });
+    expect(matchPlayerAtomToTarget(atom("Achane", ["chain"]), "chain")).toMatchObject({ matchKind: "soundalike" });
+    expect(matchPlayerAtomToTarget(atom("Gibbs", ["ribs"]), "ribs")).toMatchObject({ matchKind: "soundalike" });
+    expect(matchPlayerAtomToTarget(atom("McConkey", ["monkey"]), "monkey")).toMatchObject({
+      matchKind: "soundalike"
+    });
+
+    expect(matchPlayerAtomToTarget(atom("Travis", ["travis"]), "Grey")).toBeUndefined();
+    expect(matchPlayerAtomToTarget(atom("Travis", ["travis"]), "Baby")).toBeUndefined();
+    expect(matchPlayerAtomToTarget(atom("Kelce", ["kelce"]), "Bourne")).toBeUndefined();
+  });
+
+  it("adds validation metadata to every player-only generated name", () => {
+    const representativePlayers = [
+      "breece-hall",
+      "de-von-achane",
+      "derrick-henry",
+      "ceedee-lamb",
+      "jahmyr-gibbs",
+      "ladd-mcconkey",
+      "travis-kelce",
+      "christian-mccaffrey",
+      "bijan-robinson"
+    ].map((id) => activePlayers.find((player) => player.id === id)!);
+
+    const invalidResults = representativePlayers.flatMap((player) =>
+      generateNames([player], [], "clean").flatMap((result) =>
+        result.isValidatedPun &&
+        result.referencePhrase &&
+        result.replacedWord &&
+        result.playerAtom &&
+        result.matchKind &&
+        typeof result.score === "number"
+          ? []
+          : [`${player.fullName}: ${result.name}`]
+      )
+    );
+
+    expect(invalidResults).toEqual([]);
+  });
+
+  it("does not count generic fallback names toward representative player coverage", () => {
+    const representativePlayers = [
+      "breece-hall",
+      "de-von-achane",
+      "derrick-henry",
+      "ceedee-lamb",
+      "jahmyr-gibbs",
+      "ladd-mcconkey",
+      "travis-kelce",
+      "christian-mccaffrey",
+      "bijan-robinson"
+    ].map((id) => activePlayers.find((player) => player.id === id)!);
+
+    const underCoveredPlayers = representativePlayers.flatMap((player) => {
+      const validatedPuns = generateNames([player], [], "clean").filter((result) => result.isValidatedPun);
+      const genericFallbacks = validatedPuns.filter((result) => result.sourceType === "fallback");
+
+      return validatedPuns.length >= 20 && genericFallbacks.length === 0
+        ? []
+        : [`${player.fullName}: ${validatedPuns.length} validated, ${genericFallbacks.length} fallback`];
+    });
+
+    expect(underCoveredPlayers).toEqual([]);
   });
 
   it("does not add broad waiver-wire filler to every skill player", () => {
