@@ -214,6 +214,8 @@ describe("generateNames", () => {
       "malik-nabers",
       "puka-nacua",
       "saquon-barkley",
+      "derrick-henry",
+      "travis-kelce",
       "tyreek-hill"
     ];
 
@@ -221,10 +223,27 @@ describe("generateNames", () => {
       const player = activePlayers.find((candidate) => candidate.id === playerId)!;
       const names = generateNames([player], [], "clean");
 
-      return names.length >= 8 ? [] : [`${player.fullName}: ${names.length}`];
+      return names.length >= 24 ? [] : [`${player.fullName}: ${names.length}`];
     });
 
     expect(underCoveredPlayers).toEqual([]);
+  });
+
+  it("generates supplemental ideas for stars beyond cached phrase hits", () => {
+    const kelce = activePlayers.find((player) => player.id === "travis-kelce")!;
+    const henry = activePlayers.find((player) => player.id === "derrick-henry")!;
+
+    const kelceNames = generateNames([kelce], [], "clean").map((result) => result.name);
+    const henryNames = generateNames([henry], [], "clean").map((result) => result.name);
+
+    expect(kelceNames.length).toBeGreaterThanOrEqual(24);
+    expect(henryNames.length).toBeGreaterThanOrEqual(24);
+    expect(kelceNames).toEqual(
+      expect.arrayContaining(["Kelce Kingdom", "Kelce Mismatch", "TK Takeover", "Travis's Seam Team"])
+    );
+    expect(henryNames).toEqual(
+      expect.arrayContaining(["Henry Havoc", "Henry Ground Game", "DH Takeover", "King Henry Mode"])
+    );
   });
 
   it("does not add broad waiver-wire filler to every skill player", () => {

@@ -93,6 +93,44 @@ const cleanModeBlockedPhrases = ["sacks and the city"];
 
 const ignoredCustomKeywords = new Set(["a", "an", "and", "for", "of", "or", "the", "with"]);
 
+const alliterativeIdeaWords: Record<string, string[]> = {
+  a: ["Airwaves", "Alliance", "Afterburners", "Avalanche"],
+  b: ["Breakers", "Brigade", "Buzz", "Barricade"],
+  c: ["Command", "Circuit", "Carnival", "Collective"],
+  d: ["Dynasty", "Drive", "District", "Detonators"],
+  e: ["Empire", "Express", "Energy", "Encore"],
+  f: ["Factory", "Force", "Fever", "Finale"],
+  g: ["Galaxy", "Guild", "Gridlock", "Goldmine"],
+  h: ["Havoc", "House", "Hammer", "Highway"],
+  i: ["Inferno", "Impact", "Illusion", "Institute"],
+  j: ["Juggernauts", "Jukebox", "Jetstream", "Justice"],
+  k: ["Kingdom", "Krew", "Kickstart", "Knockout"],
+  l: ["Legends", "Laboratory", "Lightning", "Lounge"],
+  m: ["Machine", "Mayhem", "Ministry", "Miracle"],
+  n: ["Nation", "Network", "Nightshift", "Nova"],
+  o: ["Outlaws", "Odyssey", "Overdrive", "Orbit"],
+  p: ["Party", "Project", "Powerhouse", "Parade"],
+  q: ["Quest", "Quake", "Quorum", "Quickstrike"],
+  r: ["Rebellion", "Revival", "Rush", "Renegades"],
+  s: ["Show", "Society", "Storm", "Syndicate"],
+  t: ["Takeover", "Train", "Theory", "Titans"],
+  u: ["Union", "Uprising", "Undercard", "Universe"],
+  v: ["Voltage", "Vortex", "Vanguard", "Victory"],
+  w: ["Workshop", "Wave", "War Room", "Wildfire"],
+  x: ["X-Factor", "Xpress", "Xperiment", "Xchange"],
+  y: ["Yard", "Yearbook", "Yacht Club", "Yellowjackets"],
+  z: ["Zone", "Zeppelin", "Zeitgeist", "Zero Hour"]
+};
+
+const positionIdeaWords: Record<Player["position"], string[]> = {
+  QB: ["Audibles", "Air Show", "Pocket Presence", "Two-Minute Drill", "Launch Codes", "QB Club"],
+  RB: ["Ground Game", "Breakaway", "Backfield", "Goal-Line Club", "Run Game", "Yard Factory"],
+  WR: ["Route Lab", "Deep Shots", "Hands Team", "Catch Radius", "Sideline Show", "Target Share"],
+  TE: ["Mismatch", "Seam Team", "Red-Zone Room", "Hands Department", "YAC Lab", "Safety Valve"],
+  K: ["Kick Club", "Uprights", "Field Goals", "Leg Day", "Boot Room", "Three-Point Plan"],
+  DST: ["Takeaways", "Pass Rush", "No-Fly Zone", "Turnover Factory", "Pressure Package", "Pick Parade"]
+};
+
 const playerTemplates: Record<string, Template[]> = {
   "ceedee-lamb": [
     {
@@ -2024,6 +2062,7 @@ export function generateNames(
       customKeywordProfiles.flatMap((profile) => templatesForCustomPlayerKeyword(player, profile, mode))
     ),
     ...players.flatMap((player) => referenceTemplatesForPlayer(player, mode)),
+    ...players.flatMap((player) => generatedIdeaTemplatesForPlayer(player, mode)),
     ...customKeywordProfiles.flatMap((profile) => referenceTemplatesForCustomKeyword(profile, mode))
   ];
 
@@ -2039,6 +2078,74 @@ function templatesForPlayer(player: Player, mode: ContentMode): GeneratedName[] 
       mode: template.mode,
       reason: template.reason
     }));
+}
+
+function generatedIdeaTemplatesForPlayer(player: Player, mode: ContentMode): GeneratedName[] {
+  if (mode !== "clean" && mode !== "explicit") {
+    return [];
+  }
+
+  const initials = playerInitials(player);
+  const lastInitial = normalizeKeyword(player.lastName).charAt(0);
+  const alliterativeWords = alliterativeIdeaWords[lastInitial] ?? ["Dynasty", "Express", "Takeover", "Society"];
+  const positionWords = positionIdeaWords[player.position];
+  const primaryAlias = player.aliases?.[0];
+  const ideas: GeneratedName[] = [];
+
+  for (const word of alliterativeWords) {
+    ideas.push(generatedIdea(player, `${player.lastName} ${word}`, "alliterative last-name generator"));
+  }
+
+  for (const word of positionWords) {
+    ideas.push(generatedIdea(player, `${player.lastName} ${word}`, `${player.position} role generator`));
+  }
+
+  for (const word of alliterativeWords.slice(0, 2)) {
+    ideas.push(generatedIdea(player, `${player.firstName}'s ${word}`, "first-name ownership generator"));
+  }
+
+  for (const word of positionWords.slice(0, 3)) {
+    ideas.push(generatedIdea(player, `${player.firstName}'s ${word}`, `${player.position} role ownership generator`));
+  }
+
+  ideas.push(
+    generatedIdea(player, `${initials} Takeover`, "initials generator"),
+    generatedIdea(player, `${initials} Unlimited`, "initials generator"),
+    generatedIdea(player, `${initials} After Dark`, "initials generator"),
+    generatedIdea(player, `${initials} Highlight Reel`, "initials generator"),
+    generatedIdea(player, `${player.lastName} & Order`, "name-plus-pop-culture cadence generator"),
+    generatedIdea(player, `${player.lastName} Department`, "name-as-organization generator"),
+    generatedIdea(player, `${player.lastName} Incorporated`, "name-as-organization generator"),
+    generatedIdea(player, `${player.firstName} the ${player.position}`, "player-role title generator"),
+    generatedIdea(player, `${player.fullName} Experience`, "full-name event generator")
+  );
+
+  if (primaryAlias) {
+    ideas.push(
+      generatedIdea(player, `${primaryAlias} Takeover`, "alias generator"),
+      generatedIdea(player, `${primaryAlias} Mode`, "alias generator"),
+      generatedIdea(player, `${primaryAlias} Express`, "alias generator")
+    );
+  }
+
+  if (player.lastName.length >= 5) {
+    ideas.push(
+      generatedIdea(player, `${player.lastName} Season`, "last-name event generator"),
+      generatedIdea(player, `${player.lastName} Agenda`, "last-name event generator"),
+      generatedIdea(player, `${player.lastName} Coalition`, "last-name event generator")
+    );
+  }
+
+  return ideas;
+}
+
+function generatedIdea(player: Player, name: string, reason: string): GeneratedName {
+  return {
+    name,
+    source: player.fullName,
+    mode: "clean",
+    reason: `Generated from ${player.fullName}'s name using the ${reason}.`
+  };
 }
 
 function templatesForKeyword(keyword: string, mode: ContentMode): GeneratedName[] {
@@ -2312,6 +2419,12 @@ function formatKeywordLabel(keyword: string): string {
   }
 
   return titleCase(normalizeKeyword(trimmedKeyword));
+}
+
+function playerInitials(player: Player): string {
+  return [player.firstName, player.lastName]
+    .map((part) => part.replace(/[^a-zA-Z0-9]/g, "").charAt(0).toUpperCase())
+    .join("");
 }
 
 function hasTrait(player: Player, trait: string): boolean {
